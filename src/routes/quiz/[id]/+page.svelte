@@ -25,18 +25,33 @@
   
   onMount(async () => {
     try {
-      // Fetch question set
-      const response = await fetch(`/api/question-sets/${questionSetId}`);
+      // First fetch the question set metadata (without questions)
+      // to determine if it's a shuffled set
+      const metaResponse = await fetch(`/api/question-sets/${questionSetId}`);
       
-      if (!response.ok) {
+      if (!metaResponse.ok) {
         error = 'Failed to load question set';
         return;
       }
       
-      questionSet = await response.json();
+      const questionSetMeta = await metaResponse.json();
       
       // Determine if this is a shuffled question set by checking title
-      const isShuffledSet = questionSet.title.includes('(Shuffled)');
+      const isShuffledSet = questionSetMeta.title.includes('(Shuffled)');
+      
+      // Now fetch the full question set with shuffled questions if applicable
+      const fullDataUrl = isShuffledSet 
+        ? `/api/question-sets/${questionSetId}?shuffle=true` 
+        : `/api/question-sets/${questionSetId}`;
+        
+      const fullDataResponse = await fetch(fullDataUrl);
+      
+      if (!fullDataResponse.ok) {
+        error = 'Failed to load question set data';
+        return;
+      }
+      
+      questionSet = await fullDataResponse.json();
       
       // Create quiz attempt
       const token = localStorage.getItem('authToken');
@@ -48,7 +63,6 @@
         body: JSON.stringify({
           questionSetId,
           token,
-          // For shuffled sets, we shuffle questions again, for regular sets we don't
           shuffleQuestions: isShuffledSet
         })
       });
