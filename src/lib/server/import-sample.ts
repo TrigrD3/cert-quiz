@@ -1,6 +1,8 @@
 import { importQuestionSet } from './import';
 import { createShuffledQuestionSet } from './quiz';
 import sampleData from './sample-questions.json';
+import awsQuestionsPart1 from './aws-saa-questions-part1.json';
+import awsQuestionsPart2 from './aws-saa-questions-part2.json';
 import prisma from './database';
 
 async function importSampleData() {
@@ -23,6 +25,54 @@ async function importSampleData() {
     return result;
   } catch (error) {
     console.error('Error importing sample questions:', error);
+    return null;
+  }
+}
+
+async function importAwsQuestionsPart1() {
+  console.log('Starting import of AWS SAA questions (Part 1)...');
+  try {
+    // Check if already imported
+    const existingSet = await prisma.questionSet.findFirst({
+      where: {
+        title: awsQuestionsPart1.title
+      }
+    });
+
+    if (existingSet) {
+      console.log('AWS questions Part 1 already imported. Skipping...');
+      return existingSet;
+    }
+
+    const result = await importQuestionSet(awsQuestionsPart1);
+    console.log(`Imported ${result.questions.length} questions for "${result.title}"`);
+    return result;
+  } catch (error) {
+    console.error('Error importing AWS questions Part 1:', error);
+    return null;
+  }
+}
+
+async function importAwsQuestionsPart2() {
+  console.log('Starting import of AWS SAA questions (Part 2)...');
+  try {
+    // Check if already imported
+    const existingSet = await prisma.questionSet.findFirst({
+      where: {
+        title: awsQuestionsPart2.title
+      }
+    });
+
+    if (existingSet) {
+      console.log('AWS questions Part 2 already imported. Skipping...');
+      return existingSet;
+    }
+
+    const result = await importQuestionSet(awsQuestionsPart2);
+    console.log(`Imported ${result.questions.length} questions for "${result.title}"`);
+    return result;
+  } catch (error) {
+    console.error('Error importing AWS questions Part 2:', error);
     return null;
   }
 }
@@ -65,13 +115,13 @@ async function createShuffledSampleSets() {
 
 // Import samples and create shuffled versions
 async function initializeSampleData() {
-  // First import regular sample set
-  const result = await importSampleData();
+  // First import regular sample sets
+  await importSampleData();
+  await importAwsQuestionsPart1();
+  await importAwsQuestionsPart2();
   
   // Then create shuffled versions
-  if (result) {
-    await createShuffledSampleSets();
-  }
+  await createShuffledSampleSets();
 }
 
 export default initializeSampleData;
