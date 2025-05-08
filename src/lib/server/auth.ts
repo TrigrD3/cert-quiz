@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import prisma from './database';
 import { dev } from '$app/environment';
@@ -29,8 +29,8 @@ export async function registerUser(email: string, username: string, password: st
     throw new Error('Username already in use');
   }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(password, 10);
+  // Hash password with argon2
+  const passwordHash = await argon2.hash(password);
 
   // Create new user
   const user = await prisma.user.create({
@@ -68,8 +68,8 @@ export async function loginUser(emailOrUsername: string, password: string): Prom
     throw new Error('Invalid credentials');
   }
 
-  // Verify password
-  const passwordValid = await bcrypt.compare(password, user.passwordHash);
+  // Verify password with argon2
+  const passwordValid = await argon2.verify(user.passwordHash, password);
   if (!passwordValid) {
     throw new Error('Invalid credentials');
   }
