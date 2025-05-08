@@ -5,9 +5,12 @@ WORKDIR /app
 # Install build dependencies for bcrypt
 RUN apk add --no-cache python3 make g++
 
-# Copy package files and install dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci
+
+# Install dependencies with architecture check disabled for bcrypt
+RUN npm install --ignore-scripts
+RUN npm rebuild bcrypt --build-from-source
 
 # Copy source code
 COPY . .
@@ -26,17 +29,17 @@ WORKDIR /app
 # Set environment variables
 ENV NODE_ENV=production
 
-# Install dependencies required by bcrypt
+# Install runtime dependencies
 RUN apk add --no-cache python3 make g++
 
 # Copy built assets from builder stage
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/prisma ./prisma
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Install production dependencies
+RUN npm install --production --ignore-scripts
+RUN npm rebuild bcrypt --build-from-source
 
 # Expose the port the app will run on
 EXPOSE 3000
