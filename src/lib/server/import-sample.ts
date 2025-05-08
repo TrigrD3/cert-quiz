@@ -1,48 +1,24 @@
 import { importQuestionSet } from './import';
 import { createShuffledQuestionSet } from './quiz';
 import prisma from './database';
-import fs from 'fs';
-import path from 'path';
 
-// This will automatically import all JSON files in this directory
-// Note: In development, these files will be in src/lib/server
-//       In production, they'll be in build/server/chunks or similar
-const serverDir = __dirname;
+// Since we can't easily do dynamic file loading in ES modules in all environments,
+// we'll import the files explicitly
+import sampleData from './sample-questions.json';
+import awsQuestionsPart1 from './aws-saa-questions-part1.json';
+import awsQuestionsPart2 from './aws-saa-questions-part2.json';
+import exampleQuestions from './example-questions.json';
 
-// Function to load all JSON files that contain question data
-function loadQuestionSets() {
-  const questionSets = [];
-  try {
-    // Get all JSON files in the directory
-    const files = fs.readdirSync(serverDir).filter(file => 
-      file.endsWith('.json') && file !== 'package.json' && !file.includes('tsconfig')
-    );
-    
-    for (const file of files) {
-      try {
-        const filePath = path.join(serverDir, file);
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        
-        // Check if it has the structure of a question set
-        if (data.title && data.certificationType && Array.isArray(data.questions)) {
-          questionSets.push({ 
-            data, 
-            source: file
-          });
-          console.log(`Found question set: ${data.title} (${file})`);
-        }
-      } catch (err) {
-        console.error(`Error reading question set file ${file}:`, err);
-      }
-    }
-  } catch (err) {
-    console.error('Error loading question sets:', err);
-  }
-  
-  return questionSets;
-}
+// This array contains all question sets to import
+// When adding a new question set JSON file, add it to this array
+const questionSets = [
+  { data: sampleData, source: 'sample-questions.json' },
+  { data: awsQuestionsPart1, source: 'aws-saa-questions-part1.json' },
+  { data: awsQuestionsPart2, source: 'aws-saa-questions-part2.json' },
+  { data: exampleQuestions, source: 'example-questions.json' }
+];
 
-const questionSets = loadQuestionSets();
+console.log(`Found ${questionSets.length} question sets to import`);
 
 async function importSingleQuestionSet(questionSetData, source) {
   console.log(`Starting import of "${questionSetData.title}" from ${source}...`);

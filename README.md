@@ -58,6 +58,58 @@ A web application for preparing for AWS Solution Architect Associate and Profess
 
 Questions can be imported from JSON files. The JSON format should match the schema in `src/lib/server/sample-questions.json`.
 
+### Adding New Question Sets
+
+To add a new question set:
+
+1. Create a new JSON file in the `src/lib/server` directory with the following structure:
+
+```json
+{
+  "title": "Your Question Set Title",
+  "description": "Description of your question set",
+  "certificationType": "Solutions Architect Associate", 
+  "questions": [
+    {
+      "questionText": "Your question text (include '(Select TWO.)' for multiple answer questions)",
+      "explanation": "Explanation of the correct answer",
+      "answers": [
+        {
+          "answerText": "Answer option 1",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Answer option 2",
+          "isCorrect": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+2. Add the file import to `src/lib/server/import-sample.ts`:
+
+```javascript
+import yourQuestions from './your-questions.json';
+
+// This array contains all question sets to import
+const questionSets = [
+  // ... existing question sets
+  { data: yourQuestions, source: 'your-questions.json' }
+];
+```
+
+3. Restart the application to import the new question set.
+
+### Challenge Mode
+
+The application supports challenge mode quizzes:
+- Limit users to 5 mistakes
+- Provide a realistic exam-like environment
+- Automatically fail when the mistake limit is reached
+- Available in both fixed-order and shuffled variants
+
 ## Production Deployment
 
 ### Using Docker Compose
