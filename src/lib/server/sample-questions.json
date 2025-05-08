@@ -1,0 +1,121 @@
+{
+  "title": "AWS Solutions Architect Associate - Sample",
+  "description": "Sample questions for AWS Solutions Architect Associate certification",
+  "certificationType": "Solutions Architect Associate",
+  "questions": [
+    {
+      "questionText": "A company is storing an access key (access key ID and secret access key) in a text file on a custom AMI. The company uses the access key to access DynamoDB tables from instances created from the AMI. The security team has determined that the access key was compromised. Which of the following actions should the company take to remediate this vulnerability? (Select TWO.)",
+      "explanation": "The access key needs to be deleted or disabled immediately to minimize the impact of the compromised key. Additionally, switching to IAM Roles for EC2 instances is the best practice to avoid the need for storing credentials on instances.",
+      "answers": [
+        {
+          "answerText": "Use EC2 instance metadata service to provision temporary credentials.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Encrypt the text file containing the access key.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use AWS Key Management Service (AWS KMS) to store the access key.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Delete the access key and create a new IAM role with permissions to access the DynamoDB tables.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Rotate the access key by creating a new access key and deleting the compromised key.",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "questionText": "A company plans to run a monitoring application on an Amazon EC2 instance. The application will monitor the health of resources across multiple AWS Regions. The application needs to securely store an access key ID and secret access key to authenticate to other AWS services. How should the company meet these requirements?",
+      "explanation": "IAM roles for EC2 instances provide a secure method to give applications on EC2 instances permissions without storing credentials on the instance. The instance profile is the mechanism that attaches an IAM role to an EC2 instance.",
+      "answers": [
+        {
+          "answerText": "Use AWS Secrets Manager to store credentials and have the application retrieve them.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Create an IAM role with the required permissions and attach it to the EC2 instance.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Store the credentials in environment variables on the EC2 instance.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Store the credentials in a file in an encrypted EBS volume.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is planning to use Amazon S3 to store sensitive customer documents. The company's security policy requires that all data must be encrypted in transit and at rest. Additionally, the company must maintain control of the encryption keys. Which approach meets these requirements?",
+      "explanation": "Server-Side Encryption with Customer-Provided Keys (SSE-C) lets you set your own encryption keys, while AWS handles the encryption and decryption of the S3 objects. HTTPS ensures encryption in transit.",
+      "answers": [
+        {
+          "answerText": "Use server-side encryption with S3 managed keys (SSE-S3).",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use server-side encryption with AWS KMS managed keys (SSE-KMS) with a customer managed key.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Use client-side encryption with an AWS SDK crypto client.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use S3 Versioning with multi-factor authentication.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A solutions architect needs to design a highly available solution to distribute traffic to an Amazon EC2 Auto Scaling group across multiple Availability Zones. The EC2 instances must not be accessible from the internet, but must be able to pull software updates from the internet. Which solution will meet these requirements?",
+      "explanation": "An internet-facing ALB with EC2 instances in private subnets allows traffic distribution without directly exposing the instances. NAT Gateway provides internet access for instances in private subnets.",
+      "answers": [
+        {
+          "answerText": "Configure an internet-facing Application Load Balancer. Place the EC2 instances in public subnets.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an internet-facing Network Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an internet-facing Application Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Configure an internal Application Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company has an application running on Amazon EC2 instances in an Auto Scaling group. The application stores session data in memory. Users are reporting that they are being logged out of the application multiple times a day. What should a solutions architect recommend to resolve this issue?",
+      "explanation": "Using an ElastiCache cluster centralizes session data storage, allowing any instance to access the same session data, which prevents users from being logged out when instances are terminated.",
+      "answers": [
+        {
+          "answerText": "Use AWS Lambda instead of EC2 instances.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use an Amazon RDS instance to store session data.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use a larger EC2 instance type.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon ElastiCache to store session data.",
+          "isCorrect": true
+        }
+      ]
+    }
+  ]
+}
