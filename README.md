@@ -1,38 +1,90 @@
-# sv
+# AWS Certification Quiz App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A web application for preparing for AWS Solution Architect Associate and Professional certifications.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Practice with AWS certification exam-style questions
+- Track quiz attempt history and performance statistics
+- Optional user accounts for saving progress
+- Mobile-friendly interface
+- Supports importing questions from JSON format
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Technology Stack
 
-# create a new project in my-app
-npx sv create my-app
-```
+- **Frontend**: SvelteKit, TailwindCSS
+- **Backend**: Node.js with SvelteKit
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT with bcrypt
+- **Deployment**: Docker and Docker Compose
 
-## Developing
+## Development Setup
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. Clone the repository:
+   ```
+   git clone https://github.com/TrigrD3/cert-quiz.git
+   cd cert-quiz
+   ```
 
-```bash
-npm run dev
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+3. Set up the environment variables:
+   ```
+   cp .env.example .env
+   ```
+   Edit the `.env` file with your database credentials and JWT secret.
 
-## Building
+4. Generate Prisma client:
+   ```
+   npx prisma generate
+   ```
 
-To create a production version of your app:
+5. Create database schema:
+   ```
+   npx prisma migrate dev --name init
+   ```
 
-```bash
-npm run build
-```
+6. Start the development server:
+   ```
+   npm run dev
+   ```
 
-You can preview the production build with `npm run preview`.
+7. Open your browser and visit `http://localhost:5173`
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Importing Questions
+
+Questions can be imported from JSON files. The JSON format should match the schema in `src/lib/server/sample-questions.json`.
+
+## Production Deployment
+
+### Using Docker Compose
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/TrigrD3/cert-quiz.git
+   cd cert-quiz
+   ```
+
+2. Create a `.env` file:
+   ```
+   cp .env.example .env
+   ```
+   Edit the JWT_SECRET value.
+
+3. Build and start the containers:
+   ```
+   docker-compose up -d
+   ```
+
+4. Access the application at `http://localhost:3000`
+
+### Kubernetes Deployment
+
+A Kubernetes deployment is planned for future releases.
+
+## License
+
+This project is open source and available under the MIT License.
