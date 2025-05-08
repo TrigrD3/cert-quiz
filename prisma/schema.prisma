@@ -1,0 +1,90 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  username       String   @unique
+  passwordHash   String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  quizAttempts   QuizAttempt[]
+}
+
+model CertificationType {
+  id          String    @id @default(uuid())
+  name        String    @unique // e.g., "AWS Solutions Architect Associate", "AWS Solutions Architect Professional"
+  description String?
+  questionSets QuestionSet[]
+}
+
+model QuestionSet {
+  id                  String    @id @default(uuid())
+  title               String
+  description         String?
+  certificationType   CertificationType @relation(fields: [certificationTypeId], references: [id])
+  certificationTypeId String
+  questions           Question[]
+  attempts            QuizAttempt[]
+  jsonSource          String?   // Store the original filename or source of the JSON
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Question {
+  id               String    @id @default(uuid())
+  questionText     String
+  explanation      String?
+  questionSetId    String
+  questionSet      QuestionSet @relation(fields: [questionSetId], references: [id])
+  answers          Answer[]
+  attempts         QuestionAttempt[]
+  externalId       String?   // For tracking IDs from imported JSON 
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Answer {
+  id               String    @id @default(uuid())
+  answerText       String
+  isCorrect        Boolean
+  questionId       String
+  question         Question  @relation(fields: [questionId], references: [id])
+  questionAttempts QuestionAttempt[]
+  externalId       String?   // For tracking IDs from imported JSON
+}
+
+model QuizAttempt {
+  id               String    @id @default(uuid())
+  userId           String?
+  user             User?     @relation(fields: [userId], references: [id])
+  questionSetId    String
+  questionSet      QuestionSet @relation(fields: [questionSetId], references: [id])
+  score            Float
+  totalQuestions   Int
+  correctAnswers   Int
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  questionAttempts QuestionAttempt[]
+}
+
+model QuestionAttempt {
+  id               String    @id @default(uuid())
+  quizAttemptId    String
+  quizAttempt      QuizAttempt @relation(fields: [quizAttemptId], references: [id])
+  questionId       String
+  question         Question  @relation(fields: [questionId], references: [id])
+  answerId         String?
+  answer           Answer?   @relation(fields: [answerId], references: [id])
+  isCorrect        Boolean
+  timeSpent        Int?      // Time spent on this question in seconds
+}
