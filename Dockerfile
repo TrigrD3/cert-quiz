@@ -2,6 +2,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install build dependencies for bcrypt
+RUN apk add --no-cache python3 make g++
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci
@@ -22,6 +25,9 @@ WORKDIR /app
 
 # Set environment variables
 ENV NODE_ENV=production
+
+# Install dependencies required by bcrypt
+RUN apk add --no-cache python3 make g++
 
 # Copy built assets from builder stage
 COPY --from=builder /app/build ./build

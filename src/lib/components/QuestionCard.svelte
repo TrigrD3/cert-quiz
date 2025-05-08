@@ -20,6 +20,13 @@
     selectedAnswerId = answerId;
     dispatch('select', { answerId });
   }
+  
+  function handleKeyDown(event, answerId) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectAnswer(answerId);
+    }
+  }
 </script>
 
 <div class="bg-white p-6 rounded-lg shadow-md">
@@ -27,8 +34,9 @@
   
   <div class="space-y-3 mb-4">
     {#each question.answers as answer}
-      <div 
-        class="p-3 border rounded-md cursor-pointer transition-colors {
+      <button 
+        type="button"
+        class="p-3 border w-full text-left rounded-md cursor-pointer transition-colors {
           selectedAnswerId === answer.id ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
         } {
           isSubmitted && answer.id === selectedAnswerId && isCorrect ? 'bg-green-100 border-green-500' : ''
@@ -38,9 +46,11 @@
           isSubmitted && answer.isCorrect && answer.id !== selectedAnswerId ? 'bg-green-50 border-green-300' : ''
         }"
         on:click={() => selectAnswer(answer.id)}
+        on:keydown={(e) => handleKeyDown(e, answer.id)}
+        disabled={isSubmitted}
       >
         {answer.answerText}
-      </div>
+      </button>
     {/each}
   </div>
   
