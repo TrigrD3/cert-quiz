@@ -10,6 +10,7 @@
   let currentQuestionIndex = 0;
   let quizAttempt = null;
   let selectedAnswerId = null;
+  let selectedAnswerIds = [];
   let isSubmitted = false;
   let isCorrect = null;
   let showExplanation = false;
@@ -98,33 +99,75 @@
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
   
+  function isMultipleAnswerQuestion() {
+    if (!getCurrentQuestion()) return false;
+    const questionText = getCurrentQuestion().questionText;
+    return questionText.includes('(Select TWO.)') || 
+           questionText.includes('(Select TWO)') || 
+           questionText.includes('(Select two.)') ||
+           questionText.includes('(Choose two)') ||
+           questionText.includes('(Choose TWO)');
+  }
+  
   async function submitAnswer() {
-    if (!selectedAnswerId || isSubmitted) return;
+    if ((isMultipleAnswerQuestion() && selectedAnswerIds.length !== 2) || 
+        (!isMultipleAnswerQuestion() && !selectedAnswerId) || 
+        isSubmitted) return;
     
     try {
       // Calculate time spent on this question
       const questionTimeSpent = elapsedTime;
       
-      const response = await fetch('/api/quiz/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          quizAttemptId: quizAttempt.id,
-          questionId: getCurrentQuestion().id,
-          answerId: selectedAnswerId,
-          timeSpent: questionTimeSpent
-        })
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to submit answer');
-        return;
+      if (isMultipleAnswerQuestion()) {
+        // For multiple answer questions, we need to submit multiple answers
+        const results = await Promise.all(selectedAnswerIds.map(async (answerId) => {
+          const response = await fetch('/api/quiz/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              quizAttemptId: quizAttempt.id,
+              questionId: getCurrentQuestion().id,
+              answerId,
+              timeSpent: questionTimeSpent / selectedAnswerIds.length, // Split time between answers
+              isMultipleAnswer: true
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to submit answer');
+          }
+          
+          return response.json();
+        }));
+        
+        // Mark as correct if ALL submitted answers are correct
+        isCorrect = results.every(result => result.isCorrect);
+      } else {
+        // Single answer submission
+        const response = await fetch('/api/quiz/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            quizAttemptId: quizAttempt.id,
+            questionId: getCurrentQuestion().id,
+            answerId: selectedAnswerId,
+            timeSpent: questionTimeSpent
+          })
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to submit answer');
+          return;
+        }
+        
+        const result = await response.json();
+        isCorrect = result.isCorrect;
       }
       
-      const result = await response.json();
-      isCorrect = result.isCorrect;
       isSubmitted = true;
       showExplanation = true;
       
@@ -137,6 +180,7 @@
     isSubmitted = false;
     showExplanation = false;
     selectedAnswerId = null;
+    selectedAnswerIds = [];
     isCorrect = null;
     
     if (currentQuestionIndex < questionSet.questions.length - 1) {
@@ -242,12 +286,14 @@
       <QuestionCard 
         question={getCurrentQuestion()}
         bind:selectedAnswerId
+        bind:selectedAnswerIds
         bind:showExplanation
         bind:isSubmitted
         bind:isCorrect
         on:submit={submitAnswer}
         on:next={nextQuestion}
         on:select={() => {}}
+        on:selectMultiple={() => {}}
       />
     {/if}
   {/if}
