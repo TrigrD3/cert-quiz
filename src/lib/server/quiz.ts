@@ -160,12 +160,26 @@ export async function submitAnswer(
     
     // If the user has reached the maximum number of mistakes allowed
     if (incorrectAnswers >= quizAttempt.maxMistakes) {
-      // Mark the attempt as failed
+      // Get the current correct answers count before marking as failed
+      const correctAnswersCount = await prisma.questionAttempt.count({
+        where: {
+          quizAttemptId,
+          isCorrect: true
+        }
+      });
+      
+      // Calculate the score based on correct answers so far
+      const score = quizAttempt.totalQuestions > 0 
+        ? (correctAnswersCount / quizAttempt.totalQuestions) * 100
+        : 0;
+        
+      // Mark the attempt as failed but preserve correct answer count
       await prisma.quizAttempt.update({
         where: { id: quizAttemptId },
         data: {
           completedAt: new Date(),
           score: 0, // Failed attempt gets zero score
+          correctAnswers: correctAnswersCount,
           failed: true
         }
       });

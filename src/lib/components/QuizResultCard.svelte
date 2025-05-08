@@ -13,8 +13,15 @@
   export let detailed = false;
   
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleString();
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date instanceof Date && !isNaN(date.getTime()) 
+        ? date.toLocaleString() 
+        : 'Invalid date';
+    } catch (err) {
+      return 'Invalid date';
+    }
   }
   
   function getScoreClass(score) {

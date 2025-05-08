@@ -211,14 +211,42 @@
       // If the quiz was failed in challenge mode, complete it
       if (quizFailed) {
         if (timer) clearInterval(timer);
-        quizCompleted = true;
-        quizResult = {
-          score: 0,
-          totalQuestions: questionSet.questions.length,
-          correctAnswers: 0,
-          failed: true,
-          message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
-        };
+        
+        try {
+          // Get the current quiz attempt with correct answers count
+          const response = await fetch(`/api/quiz/attempt/${quizAttempt.id}`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to get quiz attempt details');
+          }
+          
+          const currentAttempt = await response.json();
+          
+          quizCompleted = true;
+          quizResult = {
+            score: 0,
+            totalQuestions: questionSet.questions.length,
+            correctAnswers: currentAttempt.correctAnswers || 0,
+            failed: true,
+            startedAt: currentAttempt.startedAt,
+            completedAt: currentAttempt.completedAt,
+            message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
+          };
+        } catch (err) {
+          console.error('Error fetching quiz attempt details:', err);
+          
+          // Fallback in case of error
+          quizCompleted = true;
+          quizResult = {
+            score: 0,
+            totalQuestions: questionSet.questions.length,
+            correctAnswers: 0,
+            failed: true,
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
+          };
+        }
       }
       
     } catch (err) {
