@@ -1,80 +1,91 @@
 import { importQuestionSet } from './import';
 import { createShuffledQuestionSet } from './quiz';
-import sampleData from './sample-questions.json';
-import awsQuestionsPart1 from './aws-saa-questions-part1.json';
-import awsQuestionsPart2 from './aws-saa-questions-part2.json';
 import prisma from './database';
+import fs from 'fs';
+import path from 'path';
 
-async function importSampleData() {
-  console.log('Starting import of sample questions...');
+// This will automatically import all JSON files in this directory
+// Note: In development, these files will be in src/lib/server
+//       In production, they'll be in build/server/chunks or similar
+const serverDir = __dirname;
+
+// Function to load all JSON files that contain question data
+function loadQuestionSets() {
+  const questionSets = [];
+  try {
+    // Get all JSON files in the directory
+    const files = fs.readdirSync(serverDir).filter(file => 
+      file.endsWith('.json') && file !== 'package.json' && !file.includes('tsconfig')
+    );
+    
+    for (const file of files) {
+      try {
+        const filePath = path.join(serverDir, file);
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        
+        // Check if it has the structure of a question set
+        if (data.title && data.certificationType && Array.isArray(data.questions)) {
+          questionSets.push({ 
+            data, 
+            source: file
+          });
+          console.log(`Found question set: ${data.title} (${file})`);
+        }
+      } catch (err) {
+        console.error(`Error reading question set file ${file}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('Error loading question sets:', err);
+  }
+  
+  return questionSets;
+}
+
+const questionSets = loadQuestionSets();
+
+async function importSingleQuestionSet(questionSetData, source) {
+  console.log(`Starting import of "${questionSetData.title}" from ${source}...`);
   try {
     // Check if already imported to avoid duplicates
     const existingSet = await prisma.questionSet.findFirst({
       where: {
-        title: sampleData.title
+        title: questionSetData.title
       }
     });
 
     if (existingSet) {
-      console.log('Sample data already imported. Skipping...');
+      console.log(`"${questionSetData.title}" already imported. Skipping...`);
       return existingSet;
     }
 
-    const result = await importQuestionSet(sampleData);
+    // Set the source filename in the jsonSource field
+    const importData = {
+      ...questionSetData,
+      jsonSource: source
+    };
+
+    const result = await importQuestionSet(importData);
     console.log(`Imported ${result.questions.length} questions for "${result.title}"`);
     return result;
   } catch (error) {
-    console.error('Error importing sample questions:', error);
+    console.error(`Error importing "${questionSetData.title}":`, error);
     return null;
   }
 }
 
-async function importAwsQuestionsPart1() {
-  console.log('Starting import of AWS SAA questions (Part 1)...');
-  try {
-    // Check if already imported
-    const existingSet = await prisma.questionSet.findFirst({
-      where: {
-        title: awsQuestionsPart1.title
-      }
-    });
-
-    if (existingSet) {
-      console.log('AWS questions Part 1 already imported. Skipping...');
-      return existingSet;
+// Function to import all discovered question sets
+async function importAllQuestionSets() {
+  const importedSets = [];
+  
+  for (const set of questionSets) {
+    const result = await importSingleQuestionSet(set.data, set.source);
+    if (result) {
+      importedSets.push(result);
     }
-
-    const result = await importQuestionSet(awsQuestionsPart1);
-    console.log(`Imported ${result.questions.length} questions for "${result.title}"`);
-    return result;
-  } catch (error) {
-    console.error('Error importing AWS questions Part 1:', error);
-    return null;
   }
-}
-
-async function importAwsQuestionsPart2() {
-  console.log('Starting import of AWS SAA questions (Part 2)...');
-  try {
-    // Check if already imported
-    const existingSet = await prisma.questionSet.findFirst({
-      where: {
-        title: awsQuestionsPart2.title
-      }
-    });
-
-    if (existingSet) {
-      console.log('AWS questions Part 2 already imported. Skipping...');
-      return existingSet;
-    }
-
-    const result = await importQuestionSet(awsQuestionsPart2);
-    console.log(`Imported ${result.questions.length} questions for "${result.title}"`);
-    return result;
-  } catch (error) {
-    console.error('Error importing AWS questions Part 2:', error);
-    return null;
-  }
+  
+  return importedSets;
 }
 
 async function createShuffledSampleSets() {
@@ -115,10 +126,8 @@ async function createShuffledSampleSets() {
 
 // Import samples and create shuffled versions
 async function initializeSampleData() {
-  // First import regular sample sets
-  await importSampleData();
-  await importAwsQuestionsPart1();
-  await importAwsQuestionsPart2();
+  // Import all question sets found in the server directory
+  await importAllQuestionSets();
   
   // Then create shuffled versions
   await createShuffledSampleSets();
