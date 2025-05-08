@@ -1,8 +1,8 @@
 import type { Handle } from '@sveltejs/kit';
-import importSampleData from '$lib/server/import-sample';
+import initializeSampleData from '$lib/server/import-sample';
 
-// Import sample questions on server start
-importSampleData().catch(console.error);
+// Import sample questions and create shuffled versions
+initializeSampleData().catch(console.error);
 
 export const handle: Handle = async ({ event, resolve }) => {
   return resolve(event);

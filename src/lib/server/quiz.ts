@@ -13,7 +13,17 @@ export interface QuestionSetWithQuestions {
   questions: QuestionWithAnswers[];
 }
 
-export async function getQuestionSet(questionSetId: string): Promise<QuestionSetWithQuestions | null> {
+// Shuffle array using Fisher-Yates algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
+export async function getQuestionSet(questionSetId: string, shuffleQuestions = false): Promise<QuestionSetWithQuestions | null> {
   const questionSet = await prisma.questionSet.findUnique({
     where: { id: questionSetId },
     include: {
@@ -25,7 +35,23 @@ export async function getQuestionSet(questionSetId: string): Promise<QuestionSet
     }
   });
 
-  return questionSet;
+  if (!questionSet) return null;
+
+  // Shuffle the questions if requested (for shuffled versions of practice sets)
+  const questions = shuffleQuestions 
+    ? shuffleArray(questionSet.questions) 
+    : questionSet.questions;
+
+  // Always shuffle the answers for each question
+  const questionsWithShuffledAnswers = questions.map(question => ({
+    ...question,
+    answers: shuffleArray(question.answers)
+  }));
+
+  return {
+    ...questionSet,
+    questions: questionsWithShuffledAnswers
+  };
 }
 
 export async function getAllQuestionSets() {
@@ -35,15 +61,19 @@ export async function getAllQuestionSets() {
       _count: {
         select: { questions: true }
       }
+    },
+    orderBy: {
+      createdAt: 'desc'
     }
   });
 }
 
 export async function createQuizAttempt(
   questionSetId: string,
-  userId?: string
+  userId?: string,
+  shuffleQuestions = false
 ): Promise<QuizAttempt> {
-  const questionSet = await getQuestionSet(questionSetId);
+  const questionSet = await getQuestionSet(questionSetId, shuffleQuestions);
   
   if (!questionSet) {
     throw new Error('Question set not found');
@@ -192,12 +222,80 @@ export async function getUserStats(userId: string) {
   // Overall stats
   const overallStats = {
     totalAttempts: attempts.length,
-    avgScore: attempts.reduce((sum, attempt) => sum + attempt.score, 0) / attempts.length,
-    bestScore: Math.max(...attempts.map(a => a.score))
+    avgScore: attempts.reduce((sum, attempt) => sum + attempt.score, 0) / (attempts.length || 1),
+    bestScore: attempts.length ? Math.max(...attempts.map(a => a.score)) : 0
   };
 
   return {
     overall: overallStats,
     certifications: certificationStats
   };
+}
+
+// Create shuffled version of a question set
+export async function createShuffledQuestionSet(sourceQuestionSetId: string): Promise<QuestionSetWithQuestions | null> {
+  // Get the source question set
+  const sourceQuestionSet = await prisma.questionSet.findUnique({
+    where: { id: sourceQuestionSetId },
+    include: {
+      questions: {
+        include: {
+          answers: true
+        }
+      },
+      certificationType: true
+    }
+  });
+
+  if (!sourceQuestionSet) {
+    throw new Error('Source question set not found');
+  }
+
+  // Check if a shuffled version already exists
+  const existingShuffled = await prisma.questionSet.findFirst({
+    where: {
+      title: {
+        contains: `${sourceQuestionSet.title} (Shuffled)`
+      }
+    }
+  });
+
+  if (existingShuffled) {
+    return getQuestionSet(existingShuffled.id, true);
+  }
+
+  // Create a new question set with the same questions but marked as shuffled
+  const newQuestionSet = await prisma.questionSet.create({
+    data: {
+      title: `${sourceQuestionSet.title} (Shuffled)`,
+      description: sourceQuestionSet.description
+        ? `${sourceQuestionSet.description} - Questions will be shuffled for each attempt.`
+        : 'Questions will be shuffled for each attempt.',
+      certificationTypeId: sourceQuestionSet.certificationTypeId,
+      jsonSource: sourceQuestionSet.jsonSource,
+      questions: {
+        create: sourceQuestionSet.questions.map(q => ({
+          questionText: q.questionText,
+          explanation: q.explanation,
+          externalId: q.externalId,
+          answers: {
+            create: q.answers.map(a => ({
+              answerText: a.answerText,
+              isCorrect: a.isCorrect,
+              externalId: a.externalId
+            }))
+          }
+        }))
+      }
+    },
+    include: {
+      questions: {
+        include: {
+          answers: true
+        }
+      }
+    }
+  });
+
+  return newQuestionSet;
 }

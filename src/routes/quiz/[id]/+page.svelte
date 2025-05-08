@@ -35,6 +35,9 @@
       
       questionSet = await response.json();
       
+      // Determine if this is a shuffled question set by checking title
+      const isShuffledSet = questionSet.title.includes('(Shuffled)');
+      
       // Create quiz attempt
       const token = localStorage.getItem('authToken');
       const attemptResponse = await fetch('/api/quiz/attempt', {
@@ -44,7 +47,9 @@
         },
         body: JSON.stringify({
           questionSetId,
-          token
+          token,
+          // For shuffled sets, we shuffle questions again, for regular sets we don't
+          shuffleQuestions: isShuffledSet
         })
       });
       

@@ -6,7 +6,7 @@ import type { RequestHandler } from './$types';
 export const POST: RequestHandler = async ({ request }) => {
   try {
     const data = await request.json();
-    const { questionSetId, token } = data;
+    const { questionSetId, token, shuffleQuestions } = data;
     
     if (!questionSetId) {
       return new Response(JSON.stringify({ error: 'Question set ID is required' }), {
@@ -26,7 +26,13 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
     
-    const quizAttempt = await createQuizAttempt(questionSetId, userId);
+    // Create the quiz attempt with optional question shuffling
+    const quizAttempt = await createQuizAttempt(
+      questionSetId, 
+      userId, 
+      !!shuffleQuestions
+    );
+    
     return json(quizAttempt);
   } catch (error) {
     console.error('Error creating quiz attempt:', error);
