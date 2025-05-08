@@ -18,6 +18,10 @@
   let error = null;
   let quizCompleted = false;
   let quizResult = null;
+  let quizFailed = false;
+  let mistakeCount = 0;
+  let isChallengeMode = false;
+  let maxMistakes = 5;
   
   // Timer variables
   let startTime = null;
@@ -54,6 +58,9 @@
       
       questionSet = await fullDataResponse.json();
       
+      // Check if this is a challenge mode question set
+      isChallengeMode = questionSet.title.includes('Challenge Mode');
+      
       // Create quiz attempt
       const token = localStorage.getItem('authToken');
       const attemptResponse = await fetch('/api/quiz/attempt', {
@@ -64,7 +71,9 @@
         body: JSON.stringify({
           questionSetId,
           token,
-          shuffleQuestions: isShuffledSet
+          shuffleQuestions: isShuffledSet,
+          isChallengeMode,
+          maxMistakes
         })
       });
       
@@ -74,6 +83,9 @@
       }
       
       quizAttempt = await attemptResponse.json();
+      
+      // Initialize selectedAnswerIds
+      selectedAnswerIds = [];
       
       // Start timer
       startTime = Date.now();
@@ -119,6 +131,8 @@
       const questionTimeSpent = elapsedTime;
       
       if (isMultipleAnswerQuestion()) {
+        console.log("Submitting multiple answers:", selectedAnswerIds);
+        
         // For multiple answer questions, we need to submit multiple answers
         const results = await Promise.all(selectedAnswerIds.map(async (answerId) => {
           const response = await fetch('/api/quiz/submit', {
@@ -142,8 +156,21 @@
           return response.json();
         }));
         
+        console.log("Multiple answer submission results:", results);
+        
         // Mark as correct if ALL submitted answers are correct
         isCorrect = results.every(result => result.isCorrect);
+        
+        // For challenge mode, check if any answer was incorrect and triggered a failure
+        if (isChallengeMode) {
+          const anyFailed = results.some(result => result.attemptFailed);
+          if (anyFailed) {
+            quizFailed = true;
+          } else if (!isCorrect) {
+            // Increment mistake count only if not already failed
+            mistakeCount++;
+          }
+        }
       } else {
         // Single answer submission
         const response = await fetch('/api/quiz/submit', {
@@ -166,10 +193,33 @@
         
         const result = await response.json();
         isCorrect = result.isCorrect;
+        
+        // Check if challenge mode failed
+        if (isChallengeMode) {
+          if (result.attemptFailed) {
+            quizFailed = true;
+          } else if (!isCorrect) {
+            // Increment mistake count only if not already failed
+            mistakeCount++;
+          }
+        }
       }
       
       isSubmitted = true;
       showExplanation = true;
+      
+      // If the quiz was failed in challenge mode, complete it
+      if (quizFailed) {
+        if (timer) clearInterval(timer);
+        quizCompleted = true;
+        quizResult = {
+          score: 0,
+          totalQuestions: questionSet.questions.length,
+          correctAnswers: 0,
+          failed: true,
+          message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
+        };
+      }
       
     } catch (err) {
       console.error('Error submitting answer:', err);
@@ -180,7 +230,7 @@
     isSubmitted = false;
     showExplanation = false;
     selectedAnswerId = null;
-    selectedAnswerIds = [];
+    selectedAnswerIds = []; // Reset multiple answers array
     isCorrect = null;
     
     if (currentQuestionIndex < questionSet.questions.length - 1) {
@@ -224,6 +274,17 @@
   function getProgressPercent() {
     if (!questionSet) return 0;
     return (currentQuestionIndex / questionSet.questions.length) * 100;
+  }
+  
+  function handleSelectMultiple(event) {
+    console.log("Multiple selection event:", event.detail);
+    // Ensure we're getting an array
+    if (Array.isArray(event.detail.answerIds)) {
+      selectedAnswerIds = [...event.detail.answerIds];
+      console.log("Updated selectedAnswerIds:", selectedAnswerIds);
+    } else {
+      console.error("Received non-array answerIds:", event.detail.answerIds);
+    }
   }
 </script>
 
@@ -272,6 +333,11 @@
           Question {currentQuestionIndex + 1} of {questionSet.questions.length}
         </span>
         <span class="ml-4">Time: {formatTime(elapsedTime)}</span>
+        {#if isChallengeMode}
+          <span class="ml-4 font-medium {mistakeCount > (maxMistakes - 2) ? 'text-red-600' : 'text-amber-600'}">
+            Mistakes: {mistakeCount}/{maxMistakes}
+          </span>
+        {/if}
       </div>
     </div>
     
@@ -293,7 +359,7 @@
         on:submit={submitAnswer}
         on:next={nextQuestion}
         on:select={() => {}}
-        on:selectMultiple={() => {}}
+        on:selectMultiple={handleSelectMultiple}
       />
     {/if}
   {/if}

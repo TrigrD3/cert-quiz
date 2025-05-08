@@ -4,7 +4,9 @@
     totalQuestions: 0,
     correctAnswers: 0,
     startedAt: '',
-    completedAt: '' 
+    completedAt: '',
+    failed: false,
+    message: ''
   };
   
   export let questionSetTitle = '';
@@ -22,12 +24,23 @@
   }
 </script>
 
-<div class="bg-white rounded-lg shadow-md p-6 {detailed ? 'w-full' : 'w-72'}">
+<div class="bg-white rounded-lg shadow-md p-6 {detailed ? 'w-full' : 'w-72'} {result.failed ? 'border-2 border-red-500' : ''}">
   <h3 class="text-lg font-semibold mb-2">{questionSetTitle}</h3>
+  
+  {#if result.failed}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-3">
+      <p class="font-bold">Challenge Failed</p>
+      {#if result.message}
+        <p class="text-sm">{result.message}</p>
+      {/if}
+    </div>
+  {/if}
   
   <div class="flex items-center justify-between mb-3">
     <span class="text-gray-700">Score:</span>
-    <span class="text-xl font-bold {getScoreClass(result.score)}">{result.score.toFixed(1)}%</span>
+    <span class="text-xl font-bold {result.failed ? 'text-red-600' : getScoreClass(result.score)}">
+      {result.failed ? 'Failed' : `${result.score.toFixed(1)}%`}
+    </span>
   </div>
   
   <div class="flex items-center justify-between mb-2">

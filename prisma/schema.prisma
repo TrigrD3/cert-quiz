@@ -36,6 +36,7 @@ model QuestionSet {
   questions           Question[]
   attempts            QuizAttempt[]
   jsonSource          String?   // Store the original filename or source of the JSON
+  isChallengeMode     Boolean   @default(false)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 }
@@ -75,6 +76,9 @@ model QuizAttempt {
   startedAt        DateTime  @default(now())
   completedAt      DateTime?
   questionAttempts QuestionAttempt[]
+  isChallengeMode  Boolean   @default(false)
+  maxMistakes      Int       @default(5)
+  failed           Boolean   @default(false)
 }
 
 model QuestionAttempt {

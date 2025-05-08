@@ -28,11 +28,15 @@ export const POST: RequestHandler = async ({ request }) => {
     }
     
     // Otherwise it's an answer submission
-    const isCorrect = await submitAnswer(quizAttemptId, questionId, answerId, timeSpent);
+    const result = await submitAnswer(quizAttemptId, questionId, answerId, timeSpent);
     
     // If this is part of a multiple answer question, just return the individual result
     // The client will determine overall correctness
-    return json({ isCorrect, isMultipleAnswer });
+    return json({ 
+      isCorrect: result.isCorrect, 
+      isMultipleAnswer,
+      attemptFailed: result.attemptFailed 
+    });
   } catch (error) {
     console.error('Error in quiz submission:', error);
     return new Response(JSON.stringify({ error: 'Failed to process submission' }), {

@@ -71,7 +71,9 @@ export async function getAllQuestionSets() {
 export async function createQuizAttempt(
   questionSetId: string,
   userId?: string,
-  shuffleQuestions = false
+  shuffleQuestions = false,
+  isChallengeMode = false,
+  maxMistakes = 5
 ): Promise<QuizAttempt> {
   const questionSet = await getQuestionSet(questionSetId, shuffleQuestions);
   
@@ -87,7 +89,9 @@ export async function createQuizAttempt(
       userId,
       score: 0,
       totalQuestions,
-      correctAnswers: 0
+      correctAnswers: 0,
+      isChallengeMode,
+      maxMistakes
     }
   });
 
@@ -99,7 +103,7 @@ export async function submitAnswer(
   questionId: string,
   answerId: string,
   timeSpent?: number
-): Promise<boolean> {
+): Promise<{isCorrect: boolean; attemptFailed?: boolean}> {
   // Get the question and selected answer
   const question = await prisma.question.findUnique({
     where: { id: questionId },
@@ -118,6 +122,24 @@ export async function submitAnswer(
   }
 
   const isCorrect = selectedAnswer.isCorrect;
+  
+  // Get the current quiz attempt to check if it's a challenge mode
+  const quizAttempt = await prisma.quizAttempt.findUnique({
+    where: { id: quizAttemptId },
+    include: {
+      _count: {
+        select: { 
+          questionAttempts: {
+            where: { isCorrect: false }
+          }
+        }
+      }
+    }
+  });
+  
+  if (!quizAttempt) {
+    throw new Error('Quiz attempt not found');
+  }
 
   // Record the question attempt
   await prisma.questionAttempt.create({
@@ -129,6 +151,28 @@ export async function submitAnswer(
       timeSpent
     }
   });
+
+  let attemptFailed = false;
+  
+  // Check if this is a challenge mode quiz and if the user has exceeded max mistakes
+  if (!isCorrect && quizAttempt.isChallengeMode) {
+    const incorrectAnswers = quizAttempt._count.questionAttempts;
+    
+    // If the user has reached the maximum number of mistakes allowed
+    if (incorrectAnswers >= quizAttempt.maxMistakes) {
+      // Mark the attempt as failed
+      await prisma.quizAttempt.update({
+        where: { id: quizAttemptId },
+        data: {
+          completedAt: new Date(),
+          score: 0, // Failed attempt gets zero score
+          failed: true
+        }
+      });
+      
+      attemptFailed = true;
+    }
+  }
 
   // If answer is correct, update the quiz attempt score
   if (isCorrect) {
@@ -142,7 +186,7 @@ export async function submitAnswer(
     });
   }
 
-  return isCorrect;
+  return { isCorrect, attemptFailed };
 }
 
 export async function completeQuizAttempt(quizAttemptId: string): Promise<QuizAttempt> {
@@ -273,6 +317,79 @@ export async function createShuffledQuestionSet(sourceQuestionSetId: string): Pr
         : 'Questions will be shuffled for each attempt.',
       certificationTypeId: sourceQuestionSet.certificationTypeId,
       jsonSource: sourceQuestionSet.jsonSource,
+      questions: {
+        create: sourceQuestionSet.questions.map(q => ({
+          questionText: q.questionText,
+          explanation: q.explanation,
+          externalId: q.externalId,
+          answers: {
+            create: q.answers.map(a => ({
+              answerText: a.answerText,
+              isCorrect: a.isCorrect,
+              externalId: a.externalId
+            }))
+          }
+        }))
+      }
+    },
+    include: {
+      questions: {
+        include: {
+          answers: true
+        }
+      }
+    }
+  });
+
+  return newQuestionSet;
+}
+
+// Create challenge mode version of a question set (max 5 mistakes)
+export async function createChallengeQuestionSet(sourceQuestionSetId: string, shuffle = false): Promise<QuestionSetWithQuestions | null> {
+  // Get the source question set
+  const sourceQuestionSet = await prisma.questionSet.findUnique({
+    where: { id: sourceQuestionSetId },
+    include: {
+      questions: {
+        include: {
+          answers: true
+        }
+      },
+      certificationType: true
+    }
+  });
+
+  if (!sourceQuestionSet) {
+    throw new Error('Source question set not found');
+  }
+  
+  const challengeTitle = shuffle 
+    ? `${sourceQuestionSet.title} (Challenge Mode - Shuffled)` 
+    : `${sourceQuestionSet.title} (Challenge Mode)`;
+
+  // Check if a challenge version already exists
+  const existingChallenge = await prisma.questionSet.findFirst({
+    where: {
+      title: {
+        equals: challengeTitle
+      }
+    }
+  });
+
+  if (existingChallenge) {
+    return getQuestionSet(existingChallenge.id, shuffle);
+  }
+
+  // Create a new question set with the same questions but marked as challenge mode
+  const newQuestionSet = await prisma.questionSet.create({
+    data: {
+      title: challengeTitle,
+      description: sourceQuestionSet.description
+        ? `${sourceQuestionSet.description} - Challenge mode: You can only make 5 mistakes before failing.${shuffle ? ' Questions will be shuffled for each attempt.' : ''}`
+        : `Challenge mode: You can only make 5 mistakes before failing.${shuffle ? ' Questions will be shuffled for each attempt.' : ''}`,
+      certificationTypeId: sourceQuestionSet.certificationTypeId,
+      jsonSource: sourceQuestionSet.jsonSource,
+      isChallengeMode: true,
       questions: {
         create: sourceQuestionSet.questions.map(q => ({
           questionText: q.questionText,

@@ -12,11 +12,17 @@
   };
 
   let isCreatingShuffled = false;
+  let isCreatingChallenge = false;
+  let isCreatingChallengeShuffled = false;
   let error = '';
   let shuffledSet = null;
+  let challengeSet = null;
+  let challengeShuffledSet = null;
 
-  // Check if this is already a shuffled version
+  // Check if this is already a special version
   const isShuffledVersion = questionSet.title.includes('(Shuffled)');
+  const isChallengeVersion = questionSet.title.includes('Challenge Mode');
+  const isSpecialVersion = isShuffledVersion || isChallengeVersion;
 
   async function createShuffledVersion() {
     if (isCreatingShuffled) return;
@@ -50,6 +56,53 @@
       isCreatingShuffled = false;
     }
   }
+  
+  async function createChallengeVersion(shuffle = false) {
+    if (shuffle) {
+      if (isCreatingChallengeShuffled) return;
+      isCreatingChallengeShuffled = true;
+    } else {
+      if (isCreatingChallenge) return;
+      isCreatingChallenge = true;
+    }
+    
+    error = '';
+    
+    try {
+      const response = await fetch('/api/question-sets/create-challenge', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          questionSetId: questionSet.id,
+          shuffle
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        error = result.error || 'Failed to create challenge version';
+        return;
+      }
+      
+      if (shuffle) {
+        challengeShuffledSet = result.questionSet;
+      } else {
+        challengeSet = result.questionSet;
+      }
+    } catch (err) {
+      console.error('Error creating challenge version:', err);
+      error = 'An unexpected error occurred';
+    } finally {
+      if (shuffle) {
+        isCreatingChallengeShuffled = false;
+      } else {
+        isCreatingChallenge = false;
+      }
+    }
+  }
 </script>
 
 <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -63,6 +116,12 @@
     {#if isShuffledVersion}
       <span class="inline-block bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full ml-2">
         Shuffled Questions
+      </span>
+    {/if}
+    
+    {#if isChallengeVersion}
+      <span class="inline-block bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full ml-2">
+        Challenge Mode
       </span>
     {/if}
   </div>
@@ -83,7 +142,8 @@
       Start Quiz
     </a>
     
-    {#if !isShuffledVersion}
+    {#if !isSpecialVersion}
+      <!-- Shuffled Version Button -->
       {#if shuffledSet}
         <a 
           href="/quiz/{shuffledSet.id}" 
@@ -98,6 +158,42 @@
           disabled={isCreatingShuffled}
         >
           {isCreatingShuffled ? 'Creating...' : 'Create Shuffled Version'}
+        </button>
+      {/if}
+      
+      <!-- Challenge Mode Button -->
+      {#if challengeSet}
+        <a 
+          href="/quiz/{challengeSet.id}" 
+          class="inline-block px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+        >
+          Challenge Mode (Fixed)
+        </a>
+      {:else}
+        <button 
+          on:click={() => createChallengeVersion(false)}
+          class="inline-block px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isCreatingChallenge}
+        >
+          {isCreatingChallenge ? 'Creating...' : 'Challenge Mode (Fixed)'}
+        </button>
+      {/if}
+      
+      <!-- Challenge Mode Shuffled Button -->
+      {#if challengeShuffledSet}
+        <a 
+          href="/quiz/{challengeShuffledSet.id}" 
+          class="inline-block px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+        >
+          Challenge Mode (Shuffled)
+        </a>
+      {:else}
+        <button 
+          on:click={() => createChallengeVersion(true)}
+          class="inline-block px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isCreatingChallengeShuffled}
+        >
+          {isCreatingChallengeShuffled ? 'Creating...' : 'Challenge Mode (Shuffled)'}
         </button>
       {/if}
     {/if}
