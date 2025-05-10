@@ -11,6 +11,7 @@ export const POST: RequestHandler = async ({ request }) => {
       answerId, 
       timeSpent, 
       complete, 
+      abandoned, 
       isMultipleAnswer 
     } = data;
     
@@ -23,7 +24,7 @@ export const POST: RequestHandler = async ({ request }) => {
     
     // If this is a completion request
     if (complete) {
-      const completedAttempt = await completeQuizAttempt(quizAttemptId);
+      const completedAttempt = await completeQuizAttempt(quizAttemptId, abandoned);
       return json(completedAttempt);
     }
     

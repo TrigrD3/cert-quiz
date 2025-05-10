@@ -195,6 +195,45 @@
     };
   });
   
+  // Function to quit the quiz early
+  async function quitQuiz() {
+    if (confirm('Are you sure you want to quit this quiz? Your progress will be lost.')) {
+      if (timer) clearInterval(timer);
+      
+      try {
+        // If we have an active quiz attempt, mark it as completed
+        if (quizAttempt) {
+          const response = await fetch('/api/quiz/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              quizAttemptId: quizAttempt.id,
+              complete: true,
+              abandoned: true
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Quiz abandoned:', result);
+          }
+        }
+        
+        // Remove saved state
+        localStorage.removeItem(`quizState_${questionSetId}`);
+        
+        // Redirect back to quiz sets page
+        window.location.href = '/quiz';
+      } catch (err) {
+        console.error('Error abandoning quiz:', err);
+        // Redirect anyway even if there's an error
+        window.location.href = '/quiz';
+      }
+    }
+  }
+
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -458,18 +497,28 @@
       </div>
     </div>
   {:else}
-    <div class="mb-6 flex justify-between items-center">
-      <h1 class="text-2xl font-bold">{questionSet.title}</h1>
-      <div class="text-gray-600">
-        <span class="font-medium">
-          Question {currentQuestionIndex + 1} of {questionSet.questions.length}
-        </span>
-        <span class="ml-4">Time: {formatTime(elapsedTime)}</span>
-        {#if isChallengeMode}
-          <span class="ml-4 font-medium {mistakeCount > (maxMistakes - 2) ? 'text-red-600' : 'text-amber-600'}">
-            Mistakes: {mistakeCount}/{maxMistakes}
+    <div class="mb-6">
+      <div class="flex justify-between items-center mb-2">
+        <h1 class="text-2xl font-bold">{questionSet.title}</h1>
+        <button 
+          on:click={quitQuiz}
+          class="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
+        >
+          Quit Quiz
+        </button>
+      </div>
+      <div class="flex justify-between items-center">
+        <div class="text-gray-600">
+          <span class="font-medium">
+            Question {currentQuestionIndex + 1} of {questionSet.questions.length}
           </span>
-        {/if}
+          <span class="ml-4">Time: {formatTime(elapsedTime)}</span>
+          {#if isChallengeMode}
+            <span class="ml-4 font-medium {mistakeCount > (maxMistakes - 2) ? 'text-red-600' : 'text-amber-600'}">
+              Mistakes: {mistakeCount}/{maxMistakes}
+            </span>
+          {/if}
+        </div>
       </div>
     </div>
     

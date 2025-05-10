@@ -203,7 +203,7 @@ export async function submitAnswer(
   return { isCorrect, attemptFailed };
 }
 
-export async function completeQuizAttempt(quizAttemptId: string): Promise<QuizAttempt> {
+export async function completeQuizAttempt(quizAttemptId: string, abandoned: boolean = false): Promise<QuizAttempt> {
   const quizAttempt = await prisma.quizAttempt.findUnique({
     where: { id: quizAttemptId },
     include: {
@@ -215,8 +215,23 @@ export async function completeQuizAttempt(quizAttemptId: string): Promise<QuizAt
     throw new Error('Quiz attempt not found');
   }
 
-  const score = (quizAttempt.correctAnswers / quizAttempt.totalQuestions) * 100;
+  // Calculate score based on correct answers vs total questions
+  // For abandoned quizzes, we'll still calculate the score based on completed questions
+  let score = 0;
+  
+  if (!abandoned) {
+    // Regular completion - score based on all questions
+    score = (quizAttempt.correctAnswers / quizAttempt.totalQuestions) * 100;
+  } else {
+    // Abandoned quiz - score is 0 or based on attempted questions (optional)
+    const attemptedQuestions = quizAttempt.questionAttempts.length;
+    if (attemptedQuestions > 0) {
+      score = (quizAttempt.correctAnswers / attemptedQuestions) * 100;
+    }
+  }
 
+  // For now, we'll just mark it as completed with the appropriate score
+  // We won't use the abandoned field until we can run the migration
   return prisma.quizAttempt.update({
     where: { id: quizAttemptId },
     data: {
