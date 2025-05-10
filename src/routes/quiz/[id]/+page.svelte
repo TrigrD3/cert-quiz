@@ -28,6 +28,80 @@
   let elapsedTime = 0;
   let timer = null;
   
+  // Helper function to save quiz state to localStorage
+  function saveQuizState() {
+    if (!quizAttempt || quizCompleted) return;
+    
+    const quizState = {
+      questionSetId,
+      quizAttemptId: quizAttempt.id,
+      currentQuestionIndex,
+      elapsedTime,
+      isChallengeMode,
+      mistakeCount,
+      isSubmitted,
+      selectedAnswerId,
+      selectedAnswerIds,
+      isCorrect,
+      showExplanation,
+      startTime: Date.now() - (elapsedTime * 1000), // Calculate original start time
+      lastSaved: Date.now()
+    };
+    
+    localStorage.setItem(`quizState_${questionSetId}`, JSON.stringify(quizState));
+    console.log('Saved quiz state:', quizState);
+  }
+  
+  // Helper function to restore quiz state from localStorage
+  async function restoreQuizState() {
+    try {
+      const savedStateStr = localStorage.getItem(`quizState_${questionSetId}`);
+      if (!savedStateStr) return false;
+      
+      const savedState = JSON.parse(savedStateStr);
+      console.log('Found saved state:', savedState);
+      
+      // Check if the saved state is for the current quiz and not too old (24 hours max)
+      const isExpired = (Date.now() - savedState.lastSaved) > (24 * 60 * 60 * 1000);
+      if (savedState.questionSetId !== questionSetId || isExpired) {
+        localStorage.removeItem(`quizState_${questionSetId}`);
+        return false;
+      }
+      
+      // Fetch the attempt to see if it's still valid
+      const attemptResponse = await fetch(`/api/quiz/attempt/${savedState.quizAttemptId}`);
+      if (!attemptResponse.ok) return false;
+      
+      quizAttempt = await attemptResponse.json();
+      
+      // If attempt is already completed, don't restore
+      if (quizAttempt.completedAt) {
+        localStorage.removeItem(`quizState_${questionSetId}`);
+        return false;
+      }
+      
+      // Restore state
+      currentQuestionIndex = savedState.currentQuestionIndex;
+      isSubmitted = savedState.isSubmitted;
+      selectedAnswerId = savedState.selectedAnswerId;
+      selectedAnswerIds = savedState.selectedAnswerIds || [];
+      isCorrect = savedState.isCorrect;
+      showExplanation = savedState.showExplanation;
+      isChallengeMode = savedState.isChallengeMode;
+      mistakeCount = savedState.mistakeCount;
+      
+      // Restore timer state
+      startTime = savedState.startTime;
+      elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      
+      return true;
+    } catch (err) {
+      console.error('Error restoring quiz state:', err);
+      localStorage.removeItem(`quizState_${questionSetId}`);
+      return false;
+    }
+  }
+
   onMount(async () => {
     try {
       // First fetch the question set metadata (without questions)
@@ -61,36 +135,47 @@
       // Check if this is a challenge mode question set
       isChallengeMode = questionSet.title.includes('Challenge Mode');
       
-      // Create quiz attempt
-      const token = localStorage.getItem('authToken');
-      const attemptResponse = await fetch('/api/quiz/attempt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          questionSetId,
-          token,
-          shuffleQuestions: isShuffledSet,
-          isChallengeMode,
-          maxMistakes
-        })
-      });
+      // Try to restore saved state
+      const restored = await restoreQuizState();
       
-      if (!attemptResponse.ok) {
-        error = 'Failed to create quiz attempt';
-        return;
+      if (!restored) {
+        // If no saved state, create a new quiz attempt
+        const token = localStorage.getItem('authToken');
+        const attemptResponse = await fetch('/api/quiz/attempt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            questionSetId,
+            token,
+            shuffleQuestions: isShuffledSet,
+            isChallengeMode,
+            maxMistakes
+          })
+        });
+        
+        if (!attemptResponse.ok) {
+          error = 'Failed to create quiz attempt';
+          return;
+        }
+        
+        quizAttempt = await attemptResponse.json();
+        
+        // Initialize selectedAnswerIds
+        selectedAnswerIds = [];
+        
+        // Start timer
+        startTime = Date.now();
       }
       
-      quizAttempt = await attemptResponse.json();
-      
-      // Initialize selectedAnswerIds
-      selectedAnswerIds = [];
-      
-      // Start timer
-      startTime = Date.now();
+      // Start/continue timer
       timer = setInterval(() => {
         elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        // Save state every 10 seconds
+        if (elapsedTime % 10 === 0) {
+          saveQuizState();
+        }
       }, 1000);
       
     } catch (err) {
@@ -102,6 +187,11 @@
     
     return () => {
       if (timer) clearInterval(timer);
+      
+      // Save state when component is unmounted
+      if (!quizCompleted && quizAttempt) {
+        saveQuizState();
+      }
     };
   });
   
@@ -208,6 +298,9 @@
       isSubmitted = true;
       showExplanation = true;
       
+      // Save state after submitting answer
+      saveQuizState();
+      
       // If the quiz was failed in challenge mode, complete it
       if (quizFailed) {
         if (timer) clearInterval(timer);
@@ -232,6 +325,9 @@
             completedAt: currentAttempt.completedAt,
             message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
           };
+          
+          // Remove saved state when quiz fails
+          localStorage.removeItem(`quizState_${questionSetId}`);
         } catch (err) {
           console.error('Error fetching quiz attempt details:', err);
           
@@ -246,6 +342,9 @@
             completedAt: new Date().toISOString(),
             message: `Challenge failed! You made more than ${maxMistakes} mistakes.`
           };
+          
+          // Remove saved state when quiz fails
+          localStorage.removeItem(`quizState_${questionSetId}`);
         }
       }
       
@@ -264,6 +363,9 @@
     if (currentQuestionIndex < questionSet.questions.length - 1) {
       currentQuestionIndex++;
       startTime = Date.now();
+      
+      // Save state after moving to next question
+      saveQuizState();
     } else {
       // Complete the quiz
       if (timer) clearInterval(timer);
@@ -288,6 +390,8 @@
         quizResult = await response.json();
         quizCompleted = true;
         
+        // Remove saved state when quiz is completed
+        localStorage.removeItem(`quizState_${questionSetId}`);
       } catch (err) {
         console.error('Error completing quiz:', err);
       }
