@@ -155,21 +155,30 @@
   {/if}
   
   <div class="mt-4 flex justify-between">
-    <button 
-      class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      on:click={() => dispatch('submit')}
-      disabled={isSubmitDisabled()}
-    >
-      Submit Answer{isMultipleAnswerQuestion ? 's' : ''}
-    </button>
-    
-    {#if isSubmitted}
+    <div>
       <button 
-        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-        on:click={() => dispatch('next')}
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        on:click={() => dispatch('submit')}
+        disabled={isSubmitDisabled()}
       >
-        Next Question
+        Submit Answer{isMultipleAnswerQuestion ? 's' : ''}
       </button>
-    {/if}
+      
+      {#if isSubmitted}
+        <button 
+          class="ml-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+          on:click={() => dispatch('next')}
+        >
+          Next Question
+        </button>
+      {/if}
+    </div>
+    
+    <button 
+      class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+      on:click={() => dispatch('quit')}
+    >
+      Quit Quiz
+    </button>
   </div>
 </div>

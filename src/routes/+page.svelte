@@ -51,7 +51,8 @@
       comprehensive quiz sets.
     </p>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Features card (full width) -->
+    <div class="mb-6">
       <div class="bg-blue-600 text-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4">Features</h2>
         <ul class="list-disc list-inside space-y-2">
@@ -60,6 +61,8 @@
           <li>Study at your own pace, anytime</li>
           <li>Review explanations to understand concepts</li>
           <li>Mobile-friendly interface</li>
+          <li>Time limits: 1 hour for question sets with ≤ 50 questions, 2 hours for larger sets</li>
+          <li>Challenge mode with 5-mistake limit</li>
         </ul>
         
         <a 
@@ -69,8 +72,11 @@
           Start Practicing
         </a>
       </div>
-      
-      {#if isLoggedIn && recentAttempts.length > 0}
+    </div>
+    
+    <!-- Recent Attempts or Account Features (full width) -->
+    {#if isLoggedIn && recentAttempts.length > 0}
+      <div class="mb-6">
         <div class="bg-white p-6 rounded-lg shadow-md">
           <h2 class="text-xl font-semibold mb-4">Recent Attempts</h2>
           <div class="space-y-4">
@@ -82,7 +88,9 @@
             {/each}
           </div>
         </div>
-      {:else}
+      </div>
+    {:else}
+      <div class="mb-6">
         <div class="bg-white p-6 rounded-lg shadow-md">
           <h2 class="text-xl font-semibold mb-4">Account Features</h2>
           <p class="text-gray-700 mb-4">
@@ -107,8 +115,8 @@
             </div>
           {/if}
         </div>
-      {/if}
-    </div>
+      </div>
+    {/if}
   </section>
   
   <section class="mb-12">

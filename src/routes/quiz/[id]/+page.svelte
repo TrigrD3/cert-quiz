@@ -27,6 +27,7 @@
   let startTime = null;
   let elapsedTime = 0;
   let timer = null;
+  let timeLimitSeconds = 0; // Will be set based on question count
   
   // Helper function to save quiz state to localStorage
   function saveQuizState() {
@@ -135,6 +136,10 @@
       // Check if this is a challenge mode question set
       isChallengeMode = questionSet.title.includes('Challenge Mode');
       
+      // Set time limit based on question count
+      // 1 hour (3600 seconds) for ≤ 50 questions, 2 hours (7200 seconds) for > 50 questions
+      timeLimitSeconds = questionSet.questions.length > 50 ? 7200 : 3600;
+      
       // Try to restore saved state
       const restored = await restoreQuizState();
       
@@ -172,9 +177,18 @@
       // Start/continue timer
       timer = setInterval(() => {
         elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        
         // Save state every 10 seconds
         if (elapsedTime % 10 === 0) {
           saveQuizState();
+        }
+        
+        // Check if time limit is reached
+        if (timeLimitSeconds > 0 && elapsedTime >= timeLimitSeconds) {
+          // Time limit reached, auto-complete the quiz
+          clearInterval(timer);
+          alert('Time limit reached! Your quiz will be submitted automatically.');
+          completeQuizDueToTimeLimit();
         }
       }, 1000);
       
@@ -194,6 +208,53 @@
       }
     };
   });
+  
+  // Function to handle time limit reached
+  async function completeQuizDueToTimeLimit() {
+    if (timer) clearInterval(timer);
+    
+    try {
+      // Complete the quiz
+      const response = await fetch('/api/quiz/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          quizAttemptId: quizAttempt.id,
+          complete: true,
+          timeLimit: true
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        quizCompleted = true;
+        quizResult = result;
+        quizResult.message = "Time limit reached! Your quiz has been automatically submitted.";
+        
+        // Remove saved state
+        localStorage.removeItem(`quizState_${questionSetId}`);
+      }
+    } catch (err) {
+      console.error('Error completing quiz due to time limit:', err);
+      
+      // Fallback to display something to the user
+      quizCompleted = true;
+      quizResult = {
+        score: 0,
+        totalQuestions: questionSet.questions.length,
+        correctAnswers: 0,
+        startedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+        message: "Time limit reached! Your quiz has been automatically submitted."
+      };
+      
+      // Remove saved state
+      localStorage.removeItem(`quizState_${questionSetId}`);
+    }
+  }
   
   // Function to quit the quiz early
   async function quitQuiz() {
@@ -234,10 +295,27 @@
     }
   }
 
+  // Format time as MM:SS or HH:MM:SS for longer times
   function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    if (seconds < 3600) {
+      // Minutes and seconds format (MM:SS)
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      // Hours, minutes and seconds format (HH:MM:SS)
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  }
+  
+  // Function to calculate remaining time
+  function getRemainingTime() {
+    if (timeLimitSeconds <= 0) return '';
+    const remaining = Math.max(0, timeLimitSeconds - elapsedTime);
+    return formatTime(remaining);
   }
   
   function isMultipleAnswerQuestion() {
@@ -500,12 +578,6 @@
     <div class="mb-6">
       <div class="flex justify-between items-center mb-2">
         <h1 class="text-2xl font-bold">{questionSet.title}</h1>
-        <button 
-          on:click={quitQuiz}
-          class="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
-        >
-          Quit Quiz
-        </button>
       </div>
       <div class="flex justify-between items-center">
         <div class="text-gray-600">
@@ -518,6 +590,11 @@
               Mistakes: {mistakeCount}/{maxMistakes}
             </span>
           {/if}
+        </div>
+        <div class="text-gray-600">
+          <span class="font-medium">
+            Time Remaining: {getRemainingTime()} / {questionSet.questions.length > 50 ? '2 hours' : '1 hour'}
+          </span>
         </div>
       </div>
     </div>
@@ -539,6 +616,7 @@
         bind:isCorrect
         on:submit={submitAnswer}
         on:next={nextQuestion}
+        on:quit={quitQuiz}
         on:select={() => {}}
         on:selectMultiple={handleSelectMultiple}
       />
