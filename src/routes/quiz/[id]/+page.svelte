@@ -108,41 +108,41 @@
       // First fetch the question set metadata (without questions)
       // to determine if it's a shuffled set
       const metaResponse = await fetch(`/api/question-sets/${questionSetId}`);
-      
+
       if (!metaResponse.ok) {
         error = 'Failed to load question set';
         return;
       }
-      
+
       const questionSetMeta = await metaResponse.json();
-      
+
       // Determine if this is a shuffled question set by checking title
       const isShuffledSet = questionSetMeta.title.includes('(Shuffled)');
-      
+
       // Now fetch the full question set with shuffled questions if applicable
-      const fullDataUrl = isShuffledSet 
-        ? `/api/question-sets/${questionSetId}?shuffle=true` 
+      const fullDataUrl = isShuffledSet
+        ? `/api/question-sets/${questionSetId}?shuffle=true`
         : `/api/question-sets/${questionSetId}`;
-        
+
       const fullDataResponse = await fetch(fullDataUrl);
-      
+
       if (!fullDataResponse.ok) {
         error = 'Failed to load question set data';
         return;
       }
-      
+
       questionSet = await fullDataResponse.json();
-      
+
       // Check if this is a challenge mode question set
       isChallengeMode = questionSet.title.includes('Challenge Mode');
-      
+
       // Set time limit based on question count
       // 1 hour (3600 seconds) for ≤ 50 questions, 2 hours (7200 seconds) for > 50 questions
       timeLimitSeconds = questionSet.questions.length > 50 ? 7200 : 3600;
-      
+
       // Try to restore saved state
       const restored = await restoreQuizState();
-      
+
       if (!restored) {
         // If no saved state, create a new quiz attempt
         const token = localStorage.getItem('authToken');
@@ -159,30 +159,30 @@
             maxMistakes
           })
         });
-        
+
         if (!attemptResponse.ok) {
           error = 'Failed to create quiz attempt';
           return;
         }
-        
+
         quizAttempt = await attemptResponse.json();
-        
+
         // Initialize selectedAnswerIds
         selectedAnswerIds = [];
-        
+
         // Start timer
         startTime = Date.now();
       }
-      
+
       // Start/continue timer
       timer = setInterval(() => {
         elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-        
+
         // Save state every 10 seconds
         if (elapsedTime % 10 === 0) {
           saveQuizState();
         }
-        
+
         // Check if time limit is reached
         if (timeLimitSeconds > 0 && elapsedTime >= timeLimitSeconds) {
           // Time limit reached, auto-complete the quiz
@@ -191,23 +191,68 @@
           completeQuizDueToTimeLimit();
         }
       }, 1000);
-      
+
+      // Add beforeunload event listener to handle browser navigation/refresh
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
     } catch (err) {
       console.error('Error setting up quiz:', err);
       error = 'An error occurred while setting up the quiz';
     } finally {
       isLoading = false;
     }
-    
+
     return () => {
+      // Clean up event listeners and timers
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (timer) clearInterval(timer);
-      
+
       // Save state when component is unmounted
       if (!quizCompleted && quizAttempt) {
         saveQuizState();
+        handleQuizAbandonment();
       }
     };
   });
+
+  // Handler for beforeunload event (browser close/refresh)
+  function handleBeforeUnload(event) {
+    if (!quizCompleted && quizAttempt) {
+      // Save the current state before unloading
+      saveQuizState();
+
+      // Standard way to show confirmation dialog on page leave
+      // Note: Many modern browsers ignore custom messages for security reasons
+      event.preventDefault();
+      event.returnValue = '';
+      return '';
+    }
+  }
+
+  // Handle quiz abandonment when navigating away
+  async function handleQuizAbandonment() {
+    // Only if we have an active quiz attempt that's not completed
+    if (!quizCompleted && quizAttempt) {
+      try {
+        // Mark the attempt as abandoned
+        await fetch('/api/quiz/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            quizAttemptId: quizAttempt.id,
+            complete: true,
+            abandoned: true
+          })
+        });
+
+        // We don't need to wait for or handle the response as the user is navigating away
+      } catch (err) {
+        console.error('Error abandoning quiz:', err);
+      }
+    }
+  }
   
   // Function to handle time limit reached
   async function completeQuizDueToTimeLimit() {
@@ -476,11 +521,11 @@
     selectedAnswerId = null;
     selectedAnswerIds = []; // Reset multiple answers array
     isCorrect = null;
-    
+
     if (currentQuestionIndex < questionSet.questions.length - 1) {
       currentQuestionIndex++;
-      startTime = Date.now();
-      
+      // Time should not reset when moving to next question
+
       // Save state after moving to next question
       saveQuizState();
     } else {
