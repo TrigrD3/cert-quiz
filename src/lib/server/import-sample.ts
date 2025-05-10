@@ -100,13 +100,14 @@ async function createShuffledSampleSets() {
   }
 }
 
-// Import samples and create shuffled versions
+// Import samples only, without creating shuffled versions
 async function initializeSampleData() {
   // Import all question sets found in the server directory
   await importAllQuestionSets();
   
-  // Then create shuffled versions
-  await createShuffledSampleSets();
+  // Disabled automatic creation of shuffled versions
+  // Shuffled versions will be created on-demand from the UI
+  // await createShuffledSampleSets();
 }
 
 export default initializeSampleData;

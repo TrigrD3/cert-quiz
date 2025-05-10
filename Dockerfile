@@ -40,6 +40,9 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
+# Note: We don't copy .env file directly since in Kubernetes 
+# environment variables should be provided via ConfigMap/Secret
+
 # Set ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
