@@ -8,6 +8,63 @@
   let isLoading = true;
   let isLoggedIn = false;
   
+    
+  // Get unique base question sets by removing redundant versions
+  async function getUniqueBaseSets() {
+    try {
+      const response = await fetch('/api/question-sets');
+      if (!response.ok) {
+        console.error('Failed to fetch question sets');
+        return [];
+      }
+      
+      const allSets = await response.json();
+      const uniqueTitles = new Set();
+      const result = [];
+      
+      // Step 1: Extract base titles from all question sets
+      // For "AWS Solutions Architect (Shuffled)" or "AWS Solutions Architect (Challenge Mode)" 
+      // we extract "AWS Solutions Architect" as the base title
+      const baseTitleMap = new Map();
+      
+      allSets.forEach(set => {
+        let baseTitle = set.title;
+        
+        // Extract base title by removing suffixes
+        if (baseTitle.includes('(Shuffled)')) {
+          baseTitle = baseTitle.replace(' (Shuffled)', '');
+        } else if (baseTitle.includes('(Challenge Mode')) {
+          baseTitle = baseTitle.replace(/ \(Challenge Mode.*\)/, '');
+        }
+        
+        // Map each question set to its base title
+        if (!baseTitleMap.has(baseTitle)) {
+          baseTitleMap.set(baseTitle, []);
+        }
+        baseTitleMap.get(baseTitle).push(set);
+      });
+      
+      // Step 2: For each base title, find the original question set
+      // If no original exists, choose any variant
+      for (const [baseTitle, sets] of baseTitleMap.entries()) {
+        // Try to find the original set (exact title match)
+        const originalSet = sets.find(s => s.title === baseTitle);
+        
+        if (originalSet) {
+          result.push(originalSet);
+        } else if (sets.length > 0) {
+          // If no original set exists, take the first variant
+          result.push(sets[0]);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error processing question sets:', error);
+      return [];
+    }
+  }
+  
   onMount(async () => {
     isLoading = true;
     
@@ -33,7 +90,7 @@
       // Get available question sets
       const response = await fetch('/api/question-sets');
       if (response.ok) {
-        questionSets = await response.json();
+        questionSets = await getUniqueBaseSets();
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -79,7 +136,7 @@
       <div class="mb-6">
         <div class="bg-white p-6 rounded-lg shadow-md">
           <h2 class="text-xl font-semibold mb-4">Recent Attempts</h2>
-          <div class="space-y-4">
+          <div class="flex space-x-4">
             {#each recentAttempts as attempt}
               <QuizResultCard 
                 result={attempt} 
@@ -118,7 +175,7 @@
       </div>
     {/if}
   </section>
-  
+
   <section class="mb-12">
     <h2 class="text-2xl font-bold mb-6">Available Question Sets</h2>
     

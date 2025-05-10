@@ -170,7 +170,20 @@ The application supports challenge mode quizzes:
 
 ### Kubernetes Deployment
 
-A Kubernetes deployment is planned for future releases.
+The application can be deployed on Kubernetes using the manifests in the `k8s` directory:
+
+```bash
+# Create namespace
+kubectl create namespace cert-quiz
+
+# Apply ConfigMap and Secret
+kubectl apply -f k8s/configmap.yaml
+
+# Deploy application
+kubectl apply -f k8s/deployment.yaml
+```
+
+For more details, see the [Kubernetes deployment README](k8s/README.md).
 
 ## License
 

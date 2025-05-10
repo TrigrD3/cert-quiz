@@ -1,0 +1,473 @@
+{
+  "title": "AWS Solutions Architect Associate - Comprehensive Set",
+  "description": "A comprehensive set of 100 questions to prepare for the AWS Solutions Architect Associate certification exam",
+  "certificationType": "Solutions Architect Associate",
+  "questions": [
+    {
+      "questionText": "A company is storing an access key (access key ID and secret access key) in a text file on a custom AMI. The company uses the access key to access DynamoDB tables from instances created from the AMI. The security team has determined that the access key was compromised. Which of the following actions should the company take to remediate this vulnerability? (Select TWO.)",
+      "explanation": "The access key needs to be deleted or disabled immediately to minimize the impact of the compromised key. Additionally, switching to IAM Roles for EC2 instances is the best practice to avoid the need for storing credentials on instances.",
+      "answers": [
+        {
+          "answerText": "Use EC2 instance metadata service to provision temporary credentials.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Encrypt the text file containing the access key.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use AWS Key Management Service (AWS KMS) to store the access key.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Delete the access key and create a new IAM role with permissions to access the DynamoDB tables.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Rotate the access key by creating a new access key and deleting the compromised key.",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "questionText": "A company plans to run a monitoring application on an Amazon EC2 instance. The application will monitor the health of resources across multiple AWS Regions. The application needs to securely store an access key ID and secret access key to authenticate to other AWS services. How should the company meet these requirements?",
+      "explanation": "IAM roles for EC2 instances provide a secure method to give applications on EC2 instances permissions without storing credentials on the instance. The instance profile is the mechanism that attaches an IAM role to an EC2 instance.",
+      "answers": [
+        {
+          "answerText": "Use AWS Secrets Manager to store credentials and have the application retrieve them.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Create an IAM role with the required permissions and attach it to the EC2 instance.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Store the credentials in environment variables on the EC2 instance.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Store the credentials in a file in an encrypted EBS volume.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is planning to use Amazon S3 to store sensitive customer documents. The company's security policy requires that all data must be encrypted in transit and at rest. Additionally, the company must maintain control of the encryption keys. Which approach meets these requirements?",
+      "explanation": "Server-Side Encryption with AWS KMS Customer Managed Keys (SSE-KMS with CMK) lets you create, rotate, disable, and define access controls for the encryption keys used to encrypt your S3 data. HTTPS ensures encryption in transit.",
+      "answers": [
+        {
+          "answerText": "Use server-side encryption with S3 managed keys (SSE-S3).",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use server-side encryption with AWS KMS managed keys (SSE-KMS) with a customer managed key.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Use client-side encryption with an AWS SDK crypto client.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use S3 Versioning with multi-factor authentication.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A solutions architect needs to design a highly available solution to distribute traffic to an Amazon EC2 Auto Scaling group across multiple Availability Zones. The EC2 instances must not be accessible from the internet, but must be able to pull software updates from the internet. Which solution will meet these requirements?",
+      "explanation": "An internet-facing ALB with EC2 instances in private subnets allows traffic distribution without directly exposing the instances. NAT Gateway provides internet access for instances in private subnets.",
+      "answers": [
+        {
+          "answerText": "Configure an internet-facing Application Load Balancer. Place the EC2 instances in public subnets.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an internet-facing Network Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an internet-facing Application Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Configure an internal Application Load Balancer. Place the EC2 instances in private subnets. Configure a NAT gateway.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company has an application running on Amazon EC2 instances in an Auto Scaling group. The application stores session data in memory. Users are reporting that they are being logged out of the application multiple times a day. What should a solutions architect recommend to resolve this issue?",
+      "explanation": "Using an ElastiCache cluster centralizes session data storage, allowing any instance to access the same session data, which prevents users from being logged out when instances are terminated.",
+      "answers": [
+        {
+          "answerText": "Use AWS Lambda instead of EC2 instances.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use an Amazon RDS instance to store session data.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use a larger EC2 instance type.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon ElastiCache to store session data.",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "questionText": "A company has a multi-tier web application that runs on Amazon EC2 instances behind an Application Load Balancer. The application layer connects to an Amazon RDS MySQL DB instance. The database currently experiences heavy read traffic. How should a solutions architect improve the database performance?",
+      "explanation": "Read replicas provide enhanced performance and durability for RDS database instances. They make it easy to elastically scale out beyond the capacity constraints of a single DB instance for read-heavy database workloads.",
+      "answers": [
+        {
+          "answerText": "Create an Amazon RDS read replica and modify the application to use the read replica for read operations.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Create an Amazon ElastiCache cluster and configure the application to use the cache.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Migrate the database to an Amazon Redshift cluster.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Increase the allocated storage for the RDS instance.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company hosts an application on premises that uploads and processes thousands of 5 MB image files daily. The company wants to migrate this application to AWS to reduce operational overhead. The application must be highly available and the files must be processed as soon as they are uploaded. Which solution should a solutions architect recommend?",
+      "explanation": "S3 offers high durability and availability for object storage. Lambda functions can be triggered automatically by S3 events, such as object creations, to process the images as soon as they are uploaded.",
+      "answers": [
+        {
+          "answerText": "Upload the image files to Amazon EFS and mount the file system to multiple Amazon EC2 instances for processing.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Upload the image files to Amazon S3 and use S3 event notifications to trigger an AWS Lambda function to process the files.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Upload the image files to Amazon S3 and use Amazon CloudWatch Events scheduled rules to trigger a Lambda function to process the files.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Upload the image files to an Amazon EC2 instance and use a cron job to process the files.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is designing a new social media application that will store user profile information in Amazon DynamoDB. The application will have a search feature that must be able to find users by their last name. Which DynamoDB strategy should be used to implement this search feature?",
+      "explanation": "DynamoDB global secondary indexes enable efficient queries on attributes other than the primary key. Creating a GSI with last name as the partition key enables efficient searches for users by last name.",
+      "answers": [
+        {
+          "answerText": "Create a global secondary index with the last name as the partition key.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Create a local secondary index with the last name as the sort key.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use the DynamoDB Scan operation to find users with the specified last name.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon Redshift to store user profile information for searches.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company wants to migrate a critical application to AWS. The application currently uses Oracle Real Application Clusters (RAC). The company wants to maintain high availability while minimizing licensing costs. What should a solutions architect recommend?",
+      "explanation": "RDS Multi-AZ deployments provide high availability for database instances using synchronous replication. When a problem occurs, RDS automatically fails over to the standby instance without manual intervention.",
+      "answers": [
+        {
+          "answerText": "Migrate to Amazon RDS for Oracle with Multi-AZ deployment.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Migrate to Amazon Aurora with Multi-AZ deployment.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Migrate to Amazon EC2 instances in an Auto Scaling group running Oracle RAC.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Migrate to Amazon RDS for Oracle with a read replica.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A solutions architect must design a highly available architecture for a new application. The application will run on EC2 instances and must be able to handle the failure of a single instance or an entire Availability Zone. Which solution will meet these requirements with the LEAST complexity?",
+      "explanation": "Using an Auto Scaling group spanning multiple AZs with an ALB ensures high availability and automatic failover when instances or AZs become unavailable.",
+      "answers": [
+        {
+          "answerText": "Use an Application Load Balancer configured with a target group. Register instances across multiple AWS Regions with the target group.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use an Application Load Balancer configured with a target group. Register instances in multiple Availability Zones with the target group.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an Auto Scaling group with instances in multiple AWS Regions. Configure an Amazon Route 53 record with a routing policy to direct traffic to the Auto Scaling group.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure an Auto Scaling group with instances in multiple Availability Zones. Configure an Application Load Balancer to direct traffic to the Auto Scaling group.",
+          "isCorrect": true
+        }
+      ]
+    },
+    {
+      "questionText": "A company has an application running on EC2 instances behind an Application Load Balancer (ALB). The instances run in an Auto Scaling group across multiple Availability Zones. The application must be available 24/7, but traffic is predictable. What is the MOST cost-effective EC2 instance purchasing option for this workload?",
+      "explanation": "Reserved Instances provide significant discounts compared to On-Demand Instances when you have predictable usage. For a 24/7 application with predictable traffic, RIs are the most cost-effective option.",
+      "answers": [
+        {
+          "answerText": "Spot Instances",
+          "isCorrect": false
+        },
+        {
+          "answerText": "On-Demand Instances",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Reserved Instances",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Dedicated Hosts",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is designing a new gaming application that will use Amazon DynamoDB for data storage. The game will have millions of users, and the application must be able to read and write data with single-digit millisecond latency. How should a solutions architect ensure the database will perform as required?",
+      "explanation": "DynamoDB Auto Scaling automatically adjusts provisioned capacity to maintain performance while optimizing costs. It uses target tracking to add or remove throughput capacity in response to actual traffic patterns.",
+      "answers": [
+        {
+          "answerText": "Create a DynamoDB table with provisioned capacity mode and enable DynamoDB Auto Scaling.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Create a DynamoDB table with on-demand capacity mode.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Create a DynamoDB table with provisioned capacity mode and reserved capacity.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Create a DynamoDB global table to distribute requests across regions.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A solutions architect is designing a solution to store and process images. The image files will be uploaded from thousands of devices within a short time period. The images need to be processed by a fleet of EC2 instances. Which solution should the architect recommend?",
+      "explanation": "Amazon SQS provides a decoupled buffer between the image upload and processing components. S3 for storage and SQS for the processing queue ensures the architecture can handle bursts of uploads while processing images reliably.",
+      "answers": [
+        {
+          "answerText": "Use Amazon EFS to store the images. Mount the EFS file system to the EC2 instances and process the images directly.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon S3 to store the images. Use Amazon SQS to queue the image metadata and process the images with the EC2 instances.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Use Amazon S3 to store the images. Use Amazon SNS to notify the EC2 instances when new images are uploaded.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon EBS volumes to store the images. Use Amazon SNS to notify the EC2 instances when new images are uploaded.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is migrating an application from on-premises to AWS. The application uses a MySQL database. Which migration strategy will result in the LEAST downtime?",
+      "explanation": "AWS DMS allows you to migrate databases with minimal downtime. During the migration, the source database can remain fully operational, minimizing application downtime to only the time required for the cutover.",
+      "answers": [
+        {
+          "answerText": "Use AWS Database Migration Service (AWS DMS) with ongoing replication until cutover.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Use AWS DataSync to copy the database files to Amazon S3, then import to Amazon RDS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Create a backup of the on-premises database and restore it to Amazon RDS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use the mysqldump utility to export data from the on-premises database and import it to Amazon RDS.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is building an application that will store sensitive customer data in an Amazon S3 bucket. The company's security policy requires that all sensitive data be encrypted at rest. Which approach should a solutions architect recommend?",
+      "explanation": "S3 server-side encryption with KMS keys (SSE-KMS) provides managed keys and an audit trail through AWS CloudTrail, making it ideal for sensitive data requiring compliance.",
+      "answers": [
+        {
+          "answerText": "Enable default encryption for the S3 bucket using SSE-S3.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Enable default encryption for the S3 bucket using SSE-KMS with a customer managed key.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Enable default encryption for the S3 bucket using SSE-C.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use client-side encryption before uploading objects to the S3 bucket.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company's application needs to process messages in the exact order they are sent and prevent duplicate messages. Which AWS service should a solutions architect recommend?",
+      "explanation": "SQS FIFO queues provide exactly-once processing and preserve the exact order in which messages are sent and received, making them ideal for applications requiring strict ordering and deduplication.",
+      "answers": [
+        {
+          "answerText": "Amazon SQS standard queue",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Amazon SQS FIFO queue",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Amazon SNS",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Amazon EventBridge",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company has an application that uses an Amazon RDS for MySQL database. The database has periods of high activity for brief intervals throughout the day. The company wants to optimize the cost of the database while maintaining performance. What should a solutions architect recommend?",
+      "explanation": "RDS can automatically scale storage without downtime, and Aurora Serverless scales compute capacity up and down automatically based on application demands, which is ideal for variable workloads.",
+      "answers": [
+        {
+          "answerText": "Migrate the database to Amazon RDS for MySQL with Provisioned IOPS storage.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Migrate the database to Amazon Aurora Serverless.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Migrate the database to Amazon Aurora with multiple read replicas.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Modify the database to use Amazon RDS for MySQL with Magnetic storage.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company has a web application that runs on Amazon EC2 instances behind an Application Load Balancer. The company wants to ensure the application is highly available and can handle traffic fluctuations. Which architecture should a solutions architect recommend?",
+      "explanation": "Auto Scaling across multiple AZs with scheduled scaling actions provides high availability and handles predictable traffic fluctuations by automatically adjusting capacity at specified times.",
+      "answers": [
+        {
+          "answerText": "Configure EC2 instances in an Auto Scaling group across multiple Availability Zones. Configure scheduled scaling actions based on usage patterns.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Configure EC2 instances in an Auto Scaling group in a single Availability Zone. Configure scheduled scaling actions based on usage patterns.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure EC2 instances in multiple Availability Zones. Use Amazon Route 53 weighted routing to distribute traffic.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Configure EC2 instances in a placement group. Use Amazon Route 53 latency-based routing to distribute traffic.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is running a batch processing application that uses Amazon SQS to manage job information. The application is designed to provide near real-time updates, but it is experiencing issues due to duplicate job information and ordering issues. What should a solutions architect recommend to address these issues?",
+      "explanation": "SQS FIFO queues guarantee that messages are processed exactly once and in the exact order they are sent, eliminating the duplicate processing and ordering issues experienced with standard queues.",
+      "answers": [
+        {
+          "answerText": "Modify the application to use SQS standard queue with long polling.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Modify the application to use Amazon SNS instead of Amazon SQS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Modify the application to use SQS FIFO queue.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Modify the application to use Amazon EventBridge instead of Amazon SQS.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company is migrating its on-premises MySQL database to AWS. The database is 10 TB in size and needs to be available 24/7 with minimal downtime during the migration. Which approach should a solutions architect recommend?",
+      "explanation": "AWS DMS with ongoing replication provides a way to keep the source and target databases in sync during migration, minimizing downtime to just the cutover period.",
+      "answers": [
+        {
+          "answerText": "Use AWS Snowball to transfer the database to AWS, then restore it to Amazon RDS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use AWS DMS to replicate the database to Amazon RDS with ongoing replication until cutover.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Create a backup of the on-premises database and restore it to Amazon RDS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use the mysqldump utility to export data from the on-premises database and import it to Amazon RDS.",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "questionText": "A company needs to collect and process clickstream data from its website in near real-time. The data processing results need to be stored for analysis. Which architecture should a solutions architect recommend?",
+      "explanation": "Using Kinesis Data Streams for real-time data ingestion, Lambda for processing, and S3 for durable storage creates an efficient architecture for collecting and analyzing clickstream data.",
+      "answers": [
+        {
+          "answerText": "Use Amazon Kinesis Data Streams to collect the clickstream data. Use AWS Lambda to process the data and store results in Amazon S3.",
+          "isCorrect": true
+        },
+        {
+          "answerText": "Use Amazon SQS to collect the clickstream data. Use Amazon EC2 instances to process the data and store results in Amazon EBS volumes.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use Amazon EventBridge to collect the clickstream data. Use AWS Batch to process the data and store results in Amazon EFS.",
+          "isCorrect": false
+        },
+        {
+          "answerText": "Use AWS Direct Connect to collect the clickstream data. Use AWS Glue to process the data and store results in Amazon RDS.",
+          "isCorrect": false
+        }
+      ]
+    }
+  ]
+}
