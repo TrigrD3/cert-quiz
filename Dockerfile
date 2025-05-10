@@ -1,16 +1,16 @@
+# Stage 1: Build the application
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies for bcrypt
-RUN apk add --no-cache python3 make g++
+# Install build dependencies
+RUN apk add --no-cache make gcc g++ python3
 
-# Copy package files
+# Copy package files for dependency installation
 COPY package*.json ./
 
-# Install dependencies with architecture check disabled for bcrypt
-RUN npm install --ignore-scripts
-RUN npm rebuild bcrypt --build-from-source
+# Install all dependencies (including devDependencies)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -21,28 +21,33 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Second stage: production image
-FROM node:20-alpine
+# Stage 2: Create production image
+FROM node:20-alpine AS production
+
+# Create a non-root user and group
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-# Set environment variables
-ENV NODE_ENV=production
+# Copy package files
+COPY package*.json ./
 
-# Install runtime dependencies
-RUN apk add --no-cache python3 make g++
+# Install only production dependencies
+RUN npm ci --only=production
 
-# Copy built assets from builder stage
+# Copy built application from builder stage
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
-# Install production dependencies
-RUN npm install --production --ignore-scripts
-RUN npm rebuild bcrypt --build-from-source
+# Set ownership to non-root user
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose the port the app will run on
 EXPOSE 3000
 
-# Command to run the application
-CMD ["node", "build"]
+# Start the application with Prisma migration
+CMD ["sh", "-c", "npx prisma migrate deploy && node build"]

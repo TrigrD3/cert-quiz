@@ -5,22 +5,65 @@
   let questionSets = [];
   let isLoading = true;
   
-  onMount(async () => {
+  // Get unique base question sets by removing redundant versions
+  async function getUniqueBaseSets() {
     try {
       const response = await fetch('/api/question-sets');
-      if (response.ok) {
-        // Get all question sets
-        const allSets = await response.json();
-        
-        // Filter out special versions (shuffled and challenge mode)
-        // Only keep base versions that don't have (Shuffled) or Challenge Mode in the title
-        questionSets = allSets.filter(set => 
-          !set.title.includes('(Shuffled)') && 
-          !set.title.includes('Challenge Mode')
-        );
-      } else {
+      if (!response.ok) {
         console.error('Failed to fetch question sets');
+        return [];
       }
+      
+      const allSets = await response.json();
+      const uniqueTitles = new Set();
+      const result = [];
+      
+      // Step 1: Extract base titles from all question sets
+      // For "AWS Solutions Architect (Shuffled)" or "AWS Solutions Architect (Challenge Mode)" 
+      // we extract "AWS Solutions Architect" as the base title
+      const baseTitleMap = new Map();
+      
+      allSets.forEach(set => {
+        let baseTitle = set.title;
+        
+        // Extract base title by removing suffixes
+        if (baseTitle.includes('(Shuffled)')) {
+          baseTitle = baseTitle.replace(' (Shuffled)', '');
+        } else if (baseTitle.includes('(Challenge Mode')) {
+          baseTitle = baseTitle.replace(/ \(Challenge Mode.*\)/, '');
+        }
+        
+        // Map each question set to its base title
+        if (!baseTitleMap.has(baseTitle)) {
+          baseTitleMap.set(baseTitle, []);
+        }
+        baseTitleMap.get(baseTitle).push(set);
+      });
+      
+      // Step 2: For each base title, find the original question set
+      // If no original exists, choose any variant
+      for (const [baseTitle, sets] of baseTitleMap.entries()) {
+        // Try to find the original set (exact title match)
+        const originalSet = sets.find(s => s.title === baseTitle);
+        
+        if (originalSet) {
+          result.push(originalSet);
+        } else if (sets.length > 0) {
+          // If no original set exists, take the first variant
+          result.push(sets[0]);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error processing question sets:', error);
+      return [];
+    }
+  }
+  
+  onMount(async () => {
+    try {
+      questionSets = await getUniqueBaseSets();
     } catch (error) {
       console.error('Error loading question sets:', error);
     } finally {
