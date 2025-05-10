@@ -58,7 +58,7 @@ A web application for preparing for AWS Solution Architect Associate and Profess
 
 Questions can be imported from JSON files. The JSON format should match the schema in `src/lib/server/sample-questions.json`.
 
-### Adding New Question Sets
+### Managing Question Sets
 
 To add a new question set:
 
@@ -101,6 +101,41 @@ const questionSets = [
 ```
 
 3. Restart the application to import the new question set.
+
+#### Deleting Question Sets
+
+To delete a question set and its derivatives (shuffled and challenge mode versions):
+
+1. Connect to the PostgreSQL database:
+   ```bash
+   # Using docker compose
+   docker-compose exec postgres psql -U postgres -d certquiz
+   
+   # Using a local PostgreSQL installation
+   psql -U postgres -d certquiz
+   ```
+
+2. Delete the question set by title (this will cascade to delete related attempts, questions, and answers):
+   ```sql
+   -- Delete a base question set and all its derivatives
+   DELETE FROM "QuestionSet" 
+   WHERE title = 'Question Set Title' 
+   OR title LIKE 'Question Set Title (Shuffled)%'
+   OR title LIKE 'Question Set Title (Challenge Mode%';
+
+   -- Delete only a specific type of question set
+   DELETE FROM "QuestionSet" WHERE title = 'Question Set Title';
+   ```
+
+3. Alternatively, delete by ID if you know it:
+   ```sql
+   DELETE FROM "QuestionSet" WHERE id = 'question-set-id';
+   ```
+
+4. Verify deletion:
+   ```sql
+   SELECT * FROM "QuestionSet" WHERE title LIKE 'Question Set Title%';
+   ```
 
 ### Challenge Mode
 

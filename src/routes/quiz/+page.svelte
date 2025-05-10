@@ -9,7 +9,15 @@
     try {
       const response = await fetch('/api/question-sets');
       if (response.ok) {
-        questionSets = await response.json();
+        // Get all question sets
+        const allSets = await response.json();
+        
+        // Filter out special versions (shuffled and challenge mode)
+        // Only keep base versions that don't have (Shuffled) or Challenge Mode in the title
+        questionSets = allSets.filter(set => 
+          !set.title.includes('(Shuffled)') && 
+          !set.title.includes('Challenge Mode')
+        );
       } else {
         console.error('Failed to fetch question sets');
       }
