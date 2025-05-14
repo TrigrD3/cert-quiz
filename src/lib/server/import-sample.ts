@@ -10,6 +10,7 @@ import awsSAAC03Part3 from './aws-saa-c03-part3.json';
 import awsSAAC03Part4 from './aws-saa-c03-part4.json';
 import awsSAAC03Part5 from './aws-saa-c03-part5.json';
 import awsSAAC03Part6 from './aws-saa-c03-part6.json';
+import awsSAAC03Part7 from './three-answer.json';
 
 
 // This array contains all question sets to import
@@ -20,8 +21,8 @@ const questionSets = [
   { data: awsSAAC03Part3, source: 'aws-saa-c03-part3.json' },
   { data: awsSAAC03Part4, source: 'aws-saa-c03-part4.json' },
   { data: awsSAAC03Part5, source: 'aws-saa-c03-part5.json' },
-  { data: awsSAAC03Part6, source: 'aws-saa-c03-part6.json' }
-
+  { data: awsSAAC03Part6, source: 'aws-saa-c03-part6.json' },
+  { data: awsSAAC03Part7, source: 'three-answer.json' }
 ];
 
 console.log(`Found ${questionSets.length} question sets to import`);

@@ -1,0 +1,71 @@
+{
+    "title": "test 3 answer",
+    "description": "test 3 answer",
+    "certificationType": "Solutions Architect Associate",
+    "questions": [
+
+        {
+            "questionText": "A research company uses on-premises devices to generate data for analysis. The company wants to use the AWS Cloud to analyze the data. The devices generate .csv files and support writing the data to an SMB file share. Company analysts must be able to use SQL commands to query the data. The analysts will run queries periodically throughout the day. Which combination of steps will meet these requirements MOST cost-effectively? (Choose three.)",
+            "explanation": "A. Deploy an AWS Storage Gateway on premises in Amazon S3 File Gateway mode.\nC. Set up an AWS Glue crawler to create a table based on the data that is in Amazon S3.\nF. Setup Amazon Athena to query the data that is in Amazon S3. Provide access to analysts.",
+            "answers": [
+              {
+                "answerText": "Deploy an AWS Storage Gateway on premises in Amazon S3 File Gateway mode.",
+                "isCorrect": true
+              },
+              {
+                "answerText": "Deploy an AWS Storage Gateway on premises in Amazon FSx File Gateway made.",
+                "isCorrect": false
+              },
+              {
+                "answerText": "Set up an AWS Glue crawler to create a table based on the data that is in Amazon S3.",
+                "isCorrect": true
+              },
+              {
+                "answerText": "Set up an Amazon EMR cluster with EMR File System (EMRFS) to query the data that is in Amazon S3. Provide access to analysts.",
+                "isCorrect": false
+              },
+              {
+                "answerText": "Set up an Amazon Redshift cluster to query the data that is in Amazon S3. Provide access to analysts.",
+                "isCorrect": false
+              },
+              {
+                "answerText": "Setup Amazon Athena to query the data that is in Amazon S3. Provide access to analysts.",
+                "isCorrect": true
+              }
+            ]
+        },
+        {
+            "questionText": "A company wants to use Amazon Elastic Container Service (Amazon ECS) clusters and Amazon RDS DB instances to build and run a payment processing application. The company will run the application in its on-premises data center for compliance purposes. A solutions architect wants to use AWS Outposts as part of the solution. The solutions architect is working with the company's operational team to build the application. Which activities are the responsibility of the company's operational team? (Choose three.)",
+            "explanation": "Based on shared responsibility model for Outposts:\nA. Providing resilient power and network connectivity to the Outposts racks\nC. Physical security and access controls of the data center environment\nE. Physical maintenance of Outposts components (Note: AWS often handles hardware replacement, but day-to-day physical environment is customer's). More accurately for customer responsibility: Ensuring the site meets environmental requirements for the Outpost.",
+            "answers": [
+              {
+                "answerText": "Providing resilient power and network connectivity to the Outposts racks",
+                "isCorrect": true
+              },
+              {
+                "answerText": "Managing the virtualization hypervisor, storage systems, and the AWS services that run on Outposts",
+                "isCorrect": false
+              },
+              {
+                "answerText": "Physical security and access controls of the data center environment",
+                "isCorrect": true
+              },
+              {
+                "answerText": "Availability of the Outposts infrastructure including the power supplies, servers, and networking equipment within the Outposts racks",
+                "isCorrect": false
+              },
+              {
+                "answerText": "Physical maintenance of Outposts components",
+                "isCorrect": true
+              },
+              {
+                "answerText": "Providing extra capacity for Amazon ECS clusters to mitigate server failures and maintenance events",
+                "isCorrect": false
+              }
+            ]
+          }
+        ]
+    }
+
+
+

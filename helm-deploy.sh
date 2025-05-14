@@ -15,7 +15,7 @@ echo "$NAMESPACE"
 # helm search repo $HELM_REPO_NAME
 
 # Deploy using the local chart
-helm upgrade --install ${SERVICE_NAME} "$CHART_DIR" --namespace ${NAMESPACE} --set "image.tag=v24" -f values.yaml
+helm upgrade --install ${SERVICE_NAME} "$CHART_DIR" --namespace ${NAMESPACE} --set "image.tag=v31" -f values.yaml
 
 # helm uninstall ${SERVICE_NAME} --namespace ${NAMESPACE} 
 

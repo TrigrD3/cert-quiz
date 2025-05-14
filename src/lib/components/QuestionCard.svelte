@@ -1,66 +1,66 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
-  
+
   export let question = {
     id: '',
     questionText: '',
     explanation: null,
     answers: []
   };
-  
+
   export let selectedAnswerId = null;
-  export let selectedAnswerIds = [];
+  export let selectedAnswerIds = []; // This will be used for multiple selections
   export let showExplanation = false;
   export let isSubmitted = false;
   export let isCorrect = null;
-  
+
   const dispatch = createEventDispatcher();
-  
-  // Check if question requires multiple answers
-  $: isMultipleAnswerQuestion = 
-    question.questionText.includes('(Select TWO.)') || 
-    question.questionText.includes('(Select TWO)') || 
-    question.questionText.includes('(Select two.)') ||
-    question.questionText.includes('(Choose two)') ||
-    question.questionText.includes('(Choose TWO)');
-  
-  // Initialize as an empty array if it's a multiple answer question
+
+  // Helper function to determine how many selections are required
+  function parseRequiredSelections(text) {
+    if (!text) return 1;
+    if (text.match(/\((Select|Choose)\s+THREE\.?\)/i)) return 3;
+    if (text.match(/\((Select|Choose)\s+TWO\.?\)/i)) return 2;
+    // Add (Select ONE) if you want to be explicit, otherwise default is 1
+    // if (text.match(/\((Select|Choose)\s+ONE\.?\)/i)) return 1;
+    return 1; // Default to single answer
+  }
+
+  // Reactive variables to determine question type and requirements
+  $: requiredSelections = parseRequiredSelections(question.questionText);
+  $: isMultipleAnswerQuestion = requiredSelections > 1;
+
   onMount(() => {
-    if (isMultipleAnswerQuestion) {
-      // Always ensure we have an array initialized
-      if (!Array.isArray(selectedAnswerIds)) {
-        selectedAnswerIds = [];
-      }
-      console.log('Initialized selectedAnswerIds array for multiple answer question');
+    // Ensure selectedAnswerIds is an array if it's a multiple answer question
+    // This is important if the component is re-rendered or props change.
+    if (isMultipleAnswerQuestion && !Array.isArray(selectedAnswerIds)) {
+      selectedAnswerIds = [];
     }
-    
-    console.log('Question type:', isMultipleAnswerQuestion ? 'Multiple answer' : 'Single answer');
-    console.log('Question text:', question.questionText);
-    console.log('Initial selectedAnswerIds:', selectedAnswerIds);
+    // console.log(`QuestionCard: '${question.questionText}' requires ${requiredSelections} selections. Is multi: ${isMultipleAnswerQuestion}`);
   });
-  
+
   function selectAnswer(answerId) {
     if (isSubmitted) return; // Prevent changing answer after submission
-    
+
     if (isMultipleAnswerQuestion) {
       // Ensure selectedAnswerIds is always an array
       if (!Array.isArray(selectedAnswerIds)) {
         selectedAnswerIds = [];
       }
-      
-      // Toggle selection for multiple answer questions
+
       const index = selectedAnswerIds.indexOf(answerId);
       if (index === -1) {
-        // Limit to 2 selections for multiple answer questions
-        if (selectedAnswerIds.length < 2) {
+        // Add answer if limit not reached
+        if (selectedAnswerIds.length < requiredSelections) {
           selectedAnswerIds = [...selectedAnswerIds, answerId];
-          console.log('Added answer to selection:', selectedAnswerIds);
         } else {
-          console.log('Maximum selections reached (2)');
+          // Optional: User has reached max selections.
+          // You could add a small visual feedback if they try to select more.
+          // console.log(`Maximum selections (${requiredSelections}) reached.`);
         }
       } else {
+        // Remove answer
         selectedAnswerIds = selectedAnswerIds.filter(id => id !== answerId);
-        console.log('Removed answer from selection:', selectedAnswerIds);
       }
       dispatch('selectMultiple', { answerIds: selectedAnswerIds });
     } else {
@@ -69,29 +69,28 @@
       dispatch('select', { answerId });
     }
   }
-  
+
   function handleKeyDown(event, answerId) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       selectAnswer(answerId);
     }
   }
-  
+
   function isAnswerSelected(answerId) {
     if (isMultipleAnswerQuestion) {
-      // Guard against selectedAnswerIds not being an array
       return Array.isArray(selectedAnswerIds) && selectedAnswerIds.includes(answerId);
     } else {
       return selectedAnswerId === answerId;
     }
   }
-  
+
   function isSubmitDisabled() {
     if (isSubmitted) return true;
-    
+
     if (isMultipleAnswerQuestion) {
-      // Require exactly 2 selections for multiple answer questions
-      return selectedAnswerIds.length !== 2;
+      // Require exactly the specified number of selections
+      return !Array.isArray(selectedAnswerIds) || selectedAnswerIds.length !== requiredSelections;
     } else {
       return !selectedAnswerId;
     }
@@ -100,27 +99,27 @@
 
 <div class="bg-white p-6 rounded-lg shadow-md">
   <h3 class="text-xl font-semibold mb-4">{question.questionText}</h3>
-  
+
   {#if isMultipleAnswerQuestion}
     <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
       <p class="text-sm font-medium text-blue-600">
-        This question requires selecting exactly TWO correct answers.
+        This question requires selecting exactly {requiredSelections} correct answer{requiredSelections !== 1 ? 's' : ''}.
       </p>
       <p class="mt-2 text-sm">
-        Currently selected: {Array.isArray(selectedAnswerIds) ? selectedAnswerIds.length : 0} of 2
+        Currently selected: {Array.isArray(selectedAnswerIds) ? selectedAnswerIds.length : 0} of {requiredSelections}
       </p>
     </div>
   {/if}
-  
+
   <div class="space-y-3 mb-4">
     {#each question.answers as answer (answer.id)}
-      <button 
+      <button
         type="button"
         class="p-3 border w-full text-left rounded-md cursor-pointer transition-colors {
           isAnswerSelected(answer.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
         } {
-          isSubmitted && isAnswerSelected(answer.id) && (isMultipleAnswerQuestion ? 
-            (answer.isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500') : 
+          isSubmitted && isAnswerSelected(answer.id) && (isMultipleAnswerQuestion ?
+            (answer.isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500') :
             (isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'))
         } {
           isSubmitted && answer.isCorrect && !isAnswerSelected(answer.id) ? 'bg-green-50 border-green-300' : ''
@@ -146,26 +145,26 @@
       </button>
     {/each}
   </div>
-  
+
   {#if showExplanation && question.explanation}
     <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
       <h4 class="font-semibold text-yellow-800 mb-1">Explanation:</h4>
       <p>{question.explanation}</p>
     </div>
   {/if}
-  
+
   <div class="mt-4 flex justify-between">
     <div>
-      <button 
+      <button
         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         on:click={() => dispatch('submit')}
         disabled={isSubmitDisabled()}
       >
         Submit Answer{isMultipleAnswerQuestion ? 's' : ''}
       </button>
-      
+
       {#if isSubmitted}
-        <button 
+        <button
           class="ml-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
           on:click={() => dispatch('next')}
         >
@@ -173,8 +172,8 @@
         </button>
       {/if}
     </div>
-    
-    <button 
+
+    <button
       class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
       on:click={() => dispatch('quit')}
     >
