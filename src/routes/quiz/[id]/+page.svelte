@@ -303,7 +303,7 @@
   
   // Function to quit the quiz early
   async function quitQuiz() {
-    if (confirm('Are you sure you want to quit this quiz? Your progress will be lost.')) {
+    if (confirm('Are you sure you want to quit this quiz? Your progress will be saved and results will be shown.')) {
       if (timer) clearInterval(timer);
       
       try {
@@ -324,17 +324,27 @@
           if (response.ok) {
             const result = await response.json();
             console.log('Quiz abandoned:', result);
+            
+            // Set the quiz as completed and show results instead of redirecting
+            quizCompleted = true;
+            quizResult = result;
+            quizResult.message = "Quiz completed early. Here are your results.";
+            
+            // Remove saved state
+            localStorage.removeItem(`quizState_${questionSetId}`);
+            
+            // Don't redirect, let the UI show the results
+            return;
           }
         }
         
-        // Remove saved state
+        // Only redirect if we couldn't get results
         localStorage.removeItem(`quizState_${questionSetId}`);
-        
-        // Redirect back to quiz sets page
         window.location.href = '/quiz';
       } catch (err) {
         console.error('Error abandoning quiz:', err);
-        // Redirect anyway even if there's an error
+        // Redirect if there's an error
+        localStorage.removeItem(`quizState_${questionSetId}`);
         window.location.href = '/quiz';
       }
     }
@@ -370,6 +380,7 @@
            questionText.includes('(Select TWO)') || 
            questionText.includes('(Select two.)') ||
            questionText.includes('(Choose two)') ||
+           questionText.includes('(Choose two.)') ||
            questionText.includes('(Choose TWO)');
   }
   

@@ -216,22 +216,10 @@ export async function completeQuizAttempt(quizAttemptId: string, abandoned: bool
   }
 
   // Calculate score based on correct answers vs total questions
-  // For abandoned quizzes, we'll still calculate the score based on completed questions
-  let score = 0;
+  // Always use total questions as denominator, even for abandoned quizzes
+  const score = (quizAttempt.correctAnswers / quizAttempt.totalQuestions) * 100;
   
-  if (!abandoned) {
-    // Regular completion - score based on all questions
-    score = (quizAttempt.correctAnswers / quizAttempt.totalQuestions) * 100;
-  } else {
-    // Abandoned quiz - score is 0 or based on attempted questions (optional)
-    const attemptedQuestions = quizAttempt.questionAttempts.length;
-    if (attemptedQuestions > 0) {
-      score = (quizAttempt.correctAnswers / attemptedQuestions) * 100;
-    }
-  }
-
-  // For now, we'll just mark it as completed with the appropriate score
-  // We won't use the abandoned field until we can run the migration
+  // Mark it as completed with the appropriate score
   return prisma.quizAttempt.update({
     where: { id: quizAttemptId },
     data: {
