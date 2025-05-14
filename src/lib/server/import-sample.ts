@@ -4,18 +4,24 @@ import prisma from './database';
 
 // Since we can't easily do dynamic file loading in ES modules in all environments,
 // we'll import the files explicitly
-import sampleData from './sample-questions.json';
-import awsQuestionsPart1 from './aws-saa-questions-part1.json';
-import awsQuestionsPart2 from './aws-saa-questions-part2.json';
-import exampleQuestions from './example-questions.json';
+import awsSAAC03Part1 from './aws-saa-c03-part1.json';
+import awsSAAC03Part2 from './aws-saa-c03-part2.json';
+import awsSAAC03Part3 from './aws-saa-c03-part3.json';
+import awsSAAC03Part4 from './aws-saa-c03-part4.json';
+import awsSAAC03Part5 from './aws-saa-c03-part5.json';
+import awsSAAC03Part6 from './aws-saa-c03-part6.json';
+
 
 // This array contains all question sets to import
 // When adding a new question set JSON file, add it to this array
 const questionSets = [
-  { data: sampleData, source: 'sample-questions.json' },
-  { data: awsQuestionsPart1, source: 'aws-saa-questions-part1.json' },
-  { data: awsQuestionsPart2, source: 'aws-saa-questions-part2.json' },
-  { data: exampleQuestions, source: 'example-questions.json' }
+  { data: awsSAAC03Part1, source: 'aws-saa-c03-part1.json' },
+  { data: awsSAAC03Part2, source: 'aws-saa-c03-part2.json' },
+  { data: awsSAAC03Part3, source: 'aws-saa-c03-part3.json' },
+  { data: awsSAAC03Part4, source: 'aws-saa-c03-part4.json' },
+  { data: awsSAAC03Part5, source: 'aws-saa-c03-part5.json' },
+  { data: awsSAAC03Part6, source: 'aws-saa-c03-part6.json' }
+
 ];
 
 console.log(`Found ${questionSets.length} question sets to import`);
