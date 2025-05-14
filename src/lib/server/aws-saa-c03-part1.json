@@ -779,7 +779,7 @@
       },
       {
         "questionText": "A company is building an application in the AWS Cloud. The application will store data in Amazon S3 buckets in two AWS Regions. The company must use an AWS Key Management Service (AWS KMS) customer managed key to encrypt all data that is stored in the S3 buckets. The data in both S3 buckets must be encrypted and decrypted with the same KMS key. The data and the key must be stored in each of the two Regions. Which solution will meet these requirements with the LEAST operational overhead?",
-        "explanation": "No explanation provided in TXT for Q36.",
+        "explanation": "To meet the requirements of using the same customer-managed KMS key for S3 server-side encryption (SSE-KMS) in two different AWS Regions with the least operational overhead: \n1. Create a **multi-Region KMS key**. This key type allows the same key material to be used across multiple specified AWS Regions. You create a primary multi-Region key in one Region and then replicate it to other Regions, creating replica keys that share the same key ID and key material. \n2. In each of the two Regions, create an S3 bucket. \n3. Configure the S3 buckets in each Region to use SSE-KMS, pointing to the respective regional replica of your multi-Region KMS key. \n4. Configure S3 Cross-Region Replication (CRR) between the S3 buckets. S3 CRR handles the replication of objects encrypted with multi-Region KMS keys correctly, ensuring they remain encrypted with the same logical key in the destination. \nThis approach minimizes application-side complexity (compared to client-side encryption) and allows AWS to manage the key material replication and server-side encryption process, thus reducing operational overhead.",
         "answers": [
           {
             "answerText": "Create an S3 bucket in each Region. Configure the S3 buckets to use server-side encryption with Amazon S3 managed encryption keys (SSE-S3). Configure replication between the S3 buckets.",
@@ -795,7 +795,7 @@
           },
           {
             "answerText": "Create a customer managed KMS key and an S3 bucket in each Region. Configure the S3 buckets to use server-side encryption with AWS KMS keys (SSE-KMS). Configure replication between the S3 buckets.",
-            "isCorrect": false
+            "isCorrect": true
           }
         ]
       },
@@ -1767,7 +1767,7 @@
       },
       {
         "questionText": "A company recently signed a contract with an AWS Managed Service Provider (MSP) Partner for help with an application migration initiative. A solutions architect needs ta share an Amazon Machine Image (AMI) from an existing AWS account with the MSP Partner's AWS account. The AMI is backed by Amazon Elastic Block Store (Amazon EBS) and uses an AWS Key Management Service (AWS KMS) customer managed key to encrypt EBS volume snapshots. What is the MOST secure way for the solutions architect to share the AMI with the MSP Partner's AWS account?",
-        "explanation": "No explanation provided in TXT for Q80.",
+        "explanation": "To securely share an AMI encrypted with a customer-managed KMS key, two primary actions are required: \n1. Modify the AMI's launchPermission property to share the AMI specifically with the MSP Partner's AWS account ID. This allows their account to see and launch instances from your AMI. \n2. Update the key policy of your customer-managed KMS key to grant the MSP Partner's AWS account (or a specific IAM role within their account) the necessary permissions (e.g., kms:Decrypt, kms:ReEncrypt*, kms:DescribeKey, kms:CreateGrant) to use your key for decrypting the snapshots when launching an instance. \nThis combination ensures that only the authorized MSP account can launch the AMI and decrypt its associated snapshots, maintaining security and control.",
         "answers": [
           {
             "answerText": "Make the encrypted AMI and snapshots publicly available. Modify the key policy to allow the MSP Partner's AWS account to use the key.",
@@ -1775,7 +1775,7 @@
           },
           {
             "answerText": "Modify the launchPermission property of the AMI. Share the AMI with the MSP Partner's AWS account only. Modify the key policy to allow the MSP Partner's AWS account to use the key.",
-            "isCorrect": false
+            "isCorrect": true
           },
           {
             "answerText": "Modify the launchPermission property of the AMI. Share the AMI with the MSP Partner's AWS account only. Modify the key policy to trust a new KMS key that is owned by the MSP Partner for encryption.",
